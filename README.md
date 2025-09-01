@@ -27,8 +27,8 @@ A simple web-based phone system built with Node.js, React, and Twilio APIs.
 
 1. **Clone and install**
    ```bash
-   git clone <repository-url>
-   cd NomadicPhone-master
+   git clone https://github.com/imasimali/nomadic-phone.git
+   cd nomadic-phone-master
    npm run install:all
    ```
 
