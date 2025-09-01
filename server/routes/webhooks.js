@@ -11,7 +11,7 @@ const validateTwilioRequest = (req, res, next) => {
 
   if (process.env.NODE_ENV === 'production') {
     const isValid = twilio.validateRequest(
-      process.env.TWILIO_API_SECRET,
+      process.env.TWILIO_AUTH_TOKEN,
       twilioSignature,
       url,
       req.body
