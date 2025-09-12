@@ -235,16 +235,21 @@ const CallHistory: React.FC = () => {
           )}
 
           {/* Calls Table */}
-          <TableContainer>
+          <TableContainer sx={{
+            overflowX: 'auto',
+            '& .MuiTable-root': {
+              minWidth: { xs: 650, sm: 'auto' }
+            }
+          }}>
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Direction</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Direction</TableCell>
                   <TableCell>Number</TableCell>
                   <TableCell>Status</TableCell>
-                  <TableCell>Duration</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Location</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Duration</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>Date</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>Location</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -264,7 +269,7 @@ const CallHistory: React.FC = () => {
                 ) : (
                   filteredCalls.map((call) => (
                     <TableRow key={call.id} hover>
-                      <TableCell>
+                      <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
                         {call.direction === 'outbound' ? (
                           <CallMade color="primary" />
                         ) : (
@@ -272,9 +277,32 @@ const CallHistory: React.FC = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        {formatPhoneNumber(
-                          call.direction === 'outbound' ? call.to_number : call.from_number
-                        )}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          {/* Show direction icon on mobile */}
+                          <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
+                            {call.direction === 'outbound' ? (
+                              <CallMade color="primary" fontSize="small" />
+                            ) : (
+                              <CallReceived color="secondary" fontSize="small" />
+                            )}
+                          </Box>
+                          <Box>
+                            {formatPhoneNumber(
+                              call.direction === 'outbound' ? call.to_number : call.from_number
+                            )}
+                            {/* Show date on mobile */}
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{
+                                display: { xs: 'block', lg: 'none' },
+                                fontSize: '0.75rem'
+                              }}
+                            >
+                              {formatDate(call.created_at)}
+                            </Typography>
+                          </Box>
+                        </Box>
                       </TableCell>
                       <TableCell>
                         <Chip
@@ -283,14 +311,14 @@ const CallHistory: React.FC = () => {
                           size="small"
                         />
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                         {call.duration ? formatDuration(call.duration) : '-'}
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>
                         {formatDate(call.created_at)}
                       </TableCell>
-                      <TableCell>
-                        {call.direction === 'inbound' 
+                      <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>
+                        {call.direction === 'inbound'
                           ? `${call.from_city || ''}, ${call.from_state || ''}`
                           : `${call.to_city || ''}, ${call.to_state || ''}`
                         }
@@ -299,6 +327,10 @@ const CallHistory: React.FC = () => {
                         <IconButton
                           onClick={(e) => handleMenuOpen(e, call)}
                           size="small"
+                          sx={{
+                            minWidth: { xs: 44, sm: 'auto' },
+                            minHeight: { xs: 44, sm: 'auto' }
+                          }}
                         >
                           <MoreVert />
                         </IconButton>

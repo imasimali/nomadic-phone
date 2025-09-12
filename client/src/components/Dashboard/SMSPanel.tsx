@@ -165,15 +165,36 @@ const SMSPanel: React.FC = () => {
         Messages
       </Typography>
 
-      <Grid container spacing={3} sx={{ height: 'calc(100vh - 200px)' }}>
+      <Grid container spacing={3} sx={{
+        height: { xs: 'auto', md: 'calc(100vh - 200px)' },
+        minHeight: { xs: '70vh', md: 'calc(100vh - 200px)' }
+      }}>
         {/* Conversations List */}
         <Grid item xs={12} md={4}>
           <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <CardContent sx={{ pb: 1 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">Conversations</Typography>
-                <Box>
-                  <IconButton onClick={loadConversations} size="small">
+              <Box sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 2,
+                flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                gap: { xs: 1, sm: 0 }
+              }}>
+                <Typography variant="h6" sx={{ flexShrink: 0 }}>Conversations</Typography>
+                <Box sx={{
+                  display: 'flex',
+                  gap: 1,
+                  alignItems: 'center'
+                }}>
+                  <IconButton
+                    onClick={loadConversations}
+                    size="small"
+                    sx={{
+                      minWidth: { xs: 44, sm: 'auto' },
+                      minHeight: { xs: 44, sm: 'auto' }
+                    }}
+                  >
                     <Refresh />
                   </IconButton>
                   <Button
@@ -181,7 +202,10 @@ const SMSPanel: React.FC = () => {
                     size="small"
                     startIcon={<Message />}
                     onClick={startNewConversation}
-                    sx={{ ml: 1 }}
+                    sx={{
+                      minHeight: { xs: 44, sm: 'auto' },
+                      fontSize: { xs: '0.875rem', sm: '0.8125rem' }
+                    }}
                   >
                     New
                   </Button>

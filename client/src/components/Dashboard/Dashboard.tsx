@@ -66,6 +66,14 @@ const Dashboard: React.FC = () => {
     handleProfileMenuClose();
   };
 
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    // Close mobile drawer after navigation
+    if (mobileOpen) {
+      setMobileOpen(false);
+    }
+  };
+
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
     { text: 'Voice', icon: <Phone />, path: '/dashboard/voice' },
@@ -88,7 +96,7 @@ const Dashboard: React.FC = () => {
           <ListItem key={item.text} disablePadding>
             <ListItemButton
               selected={location.pathname === item.path}
-              onClick={() => navigate(item.path)}
+              onClick={() => handleNavigation(item.path)}
             >
               <ListItemIcon>
                 {item.text === 'Voice' && incomingCall ? (
@@ -201,7 +209,13 @@ const Dashboard: React.FC = () => {
           }}
           sx={{
             display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
+              width: drawerWidth,
+              '@media (max-width:600px)': {
+                width: '280px',
+              },
+            },
           }}
         >
           {drawer}
@@ -222,9 +236,13 @@ const Dashboard: React.FC = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          p: { xs: 1, sm: 2, md: 3 },
           width: { sm: `calc(100% - ${drawerWidth}px)` },
-          mt: 8,
+          mt: { xs: 7, sm: 8 },
+          minHeight: 'calc(100vh - 64px)',
+          '@media (max-width:600px)': {
+            minHeight: 'calc(100vh - 56px)',
+          },
         }}
       >
         <Routes>

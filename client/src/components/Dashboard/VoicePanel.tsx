@@ -212,7 +212,12 @@ const VoicePanel: React.FC = () => {
                 }}
               />
 
-              <Box sx={{ display: 'flex', gap: 1 }}>
+              <Box sx={{
+                display: 'flex',
+                gap: 1,
+                flexDirection: { xs: 'column', sm: 'row' },
+                mt: 1
+              }}>
                 {!activeCall && !isConnecting ? (
                   <Button
                     variant="contained"
@@ -220,6 +225,11 @@ const VoicePanel: React.FC = () => {
                     onClick={handleMakeCall}
                     disabled={!isReady || !phoneNumber.trim() || isDialing}
                     fullWidth
+                    size="large"
+                    sx={{
+                      minHeight: { xs: 52, sm: 44 },
+                      fontSize: { xs: '1rem', sm: '0.875rem' }
+                    }}
                   >
                     {isDialing ? 'Calling...' : 'Call'}
                   </Button>
@@ -231,6 +241,11 @@ const VoicePanel: React.FC = () => {
                       startIcon={<CallEnd />}
                       onClick={handleHangup}
                       fullWidth
+                      size="large"
+                      sx={{
+                        minHeight: { xs: 52, sm: 44 },
+                        fontSize: { xs: '1rem', sm: '0.875rem' }
+                      }}
                     >
                       Hang Up
                     </Button>
@@ -240,6 +255,12 @@ const VoicePanel: React.FC = () => {
                         startIcon={isMuted ? <MicOff /> : <Mic />}
                         onClick={handleMuteToggle}
                         color={isMuted ? 'error' : 'primary'}
+                        fullWidth
+                        size="large"
+                        sx={{
+                          minHeight: { xs: 52, sm: 44 },
+                          fontSize: { xs: '1rem', sm: '0.875rem' }
+                        }}
                       >
                         {isMuted ? 'Unmute' : 'Mute'}
                       </Button>
@@ -266,23 +287,33 @@ const VoicePanel: React.FC = () => {
                   </Typography>
                   
                   <Grid container spacing={2} sx={{ mt: 2 }}>
-                    <Grid item xs={6}>
+                    <Grid item xs={12} sm={6}>
                       <Button
                         variant={isMuted ? 'contained' : 'outlined'}
                         color={isMuted ? 'error' : 'primary'}
                         startIcon={isMuted ? <MicOff /> : <Mic />}
                         onClick={handleMuteToggle}
                         fullWidth
+                        size="large"
+                        sx={{
+                          minHeight: { xs: 52, sm: 44 },
+                          fontSize: { xs: '1rem', sm: '0.875rem' }
+                        }}
                       >
                         {isMuted ? 'Unmute' : 'Mute'}
                       </Button>
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid item xs={12} sm={6}>
                       <Button
                         variant="outlined"
                         startIcon={<VolumeUp />}
                         fullWidth
                         disabled
+                        size="large"
+                        sx={{
+                          minHeight: { xs: 52, sm: 44 },
+                          fontSize: { xs: '1rem', sm: '0.875rem' }
+                        }}
                       >
                         Speaker
                       </Button>

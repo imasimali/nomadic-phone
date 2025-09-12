@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { Device, Call as TwilioCall } from '@twilio/voice-sdk';
 import { voiceAPI } from '../services/api';
 import { useAuth } from './AuthContext';
+import { requestMicrophonePermission, getPermissionErrorMessage } from '../utils/permissions';
 
 interface VoiceContextType {
   device: Device | null;
@@ -61,6 +62,15 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
   const initializeDevice = async () => {
     try {
       setError(null);
+
+      // First, request microphone permission
+      const permissionResult = await requestMicrophonePermission();
+      if (!permissionResult.granted) {
+        const errorMessage = getPermissionErrorMessage(permissionResult.error || 'Permission denied');
+        setError(errorMessage);
+        setIsReady(false);
+        return;
+      }
 
       // Get access token from backend
       const response = await voiceAPI.getToken();
@@ -129,11 +139,15 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
       } else {
         let errorMessage = error?.message || error?.toString() || 'Failed to initialize voice service';
 
-        // Add specific guidance for common trial account issues
+        // Add specific guidance for common issues
         if (error?.code === 31205) {
           errorMessage += ' (Invalid access token - check TwiML Application configuration)';
+        } else if (error?.code === 31402) {
+          errorMessage = getPermissionErrorMessage('31402');
         } else if (error?.message?.includes('token')) {
           errorMessage += ' (Token issue - verify Twilio credentials and Application SID)';
+        } else if (error?.message?.includes('permission') || error?.message?.includes('microphone')) {
+          errorMessage = getPermissionErrorMessage(error.message);
         }
 
         setError(errorMessage);
