@@ -3,6 +3,7 @@ const { body, query, validationResult } = require('express-validator');
 const twilio = require('twilio');
 const axios = require('axios');
 const twilioService = require('../services/twilioService');
+const apiKeyService = require('../services/apiKeyService');
 const { asyncHandler, AppError } = require('../middleware/errorHandler');
 
 const router = express.Router();
@@ -12,23 +13,20 @@ const router = express.Router();
 // Generate access token for Twilio Voice SDK
 router.get('/token', asyncHandler(async (req, res) => {
   // Check if Twilio credentials are configured
-  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_API_KEY || !process.env.TWILIO_API_SECRET) {
+  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
     return res.status(503).json({
       error: 'Twilio credentials not configured',
-      message: 'Please configure TWILIO_ACCOUNT_SID, TWILIO_API_KEY, and TWILIO_API_SECRET in your environment variables'
+      message: 'Please configure TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN in your environment variables'
     });
   }
 
   const { AccessToken } = twilio.jwt;
   const { VoiceGrant } = AccessToken;
 
-  // Create access token using API Key/Secret (recommended approach)
-  const apiKey = process.env.TWILIO_API_KEY;
-  const apiSecret = process.env.TWILIO_API_SECRET;
+  const apiKeyData = await apiKeyService.getApiKey();
 
-  if (!apiKey || !apiSecret) {
-    throw new AppError('Twilio API Key and Secret are required for Voice SDK', 500, 'MISSING_API_CREDENTIALS');
-  }
+  const apiKey = apiKeyData.sid;
+  const apiSecret = apiKeyData.secret;
 
   const accessToken = new AccessToken(
     process.env.TWILIO_ACCOUNT_SID,
@@ -296,8 +294,8 @@ router.get('/recordings/:recordingSid', asyncHandler(async (req, res) => {
     // Use Twilio client to fetch the recording with proper authentication
     const response = await axios.get(recordingUrl, {
       auth: {
-        username: process.env.TWILIO_API_KEY,
-        password: process.env.TWILIO_API_SECRET
+        username: process.env.TWILIO_ACCOUNT_SID,
+        password: process.env.TWILIO_AUTH_TOKEN
       },
       responseType: 'stream'
     });

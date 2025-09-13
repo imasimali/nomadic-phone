@@ -36,10 +36,9 @@ A simple web-based phone system built with Node.js, React, and Twilio APIs.
 
    Edit `.env` with your Twilio credentials:
    ```env
-   # Twilio Configuration
+   # Twilio Configuration - Only need these two main credentials!
    TWILIO_ACCOUNT_SID=your_account_sid
-   TWILIO_API_KEY=your_api_key
-   TWILIO_API_SECRET=your_api_secret
+   TWILIO_AUTH_TOKEN=your_auth_token
    TWILIO_PHONE_NUMBER=+1234567890
    TWILIO_APPLICATION_SID=your_app_sid
 
@@ -49,6 +48,8 @@ A simple web-based phone system built with Node.js, React, and Twilio APIs.
    APP_PASSWORD=your_password
    WEBHOOK_BASE_URL=https://your-ngrok-url.ngrok.io
    ```
+
+   **Note**: API keys are now created automatically! You only need your Account SID and Auth Token.
 
 ### Twilio Setup
 

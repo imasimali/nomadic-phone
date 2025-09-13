@@ -13,6 +13,7 @@ const smsRoutes = require('./routes/sms');
 const webhookRoutes = require('./routes/webhooks');
 const { errorHandler } = require('./middleware/errorHandler');
 const { authenticateToken } = require('./middleware/auth');
+const apiKeyService = require('./services/apiKeyService');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -93,6 +94,12 @@ app.use(errorHandler);
 // Server startup
 async function startServer() {
   try {
+    // Initialize API key service on startup
+    if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+      console.log('Initializing API key service...');
+      await apiKeyService.initialize();
+    }
+
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV}`);

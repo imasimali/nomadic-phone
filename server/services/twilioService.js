@@ -2,9 +2,7 @@ const twilio = require('twilio');
 
 class TwilioService {
   constructor() {
-    this.client = twilio(process.env.TWILIO_API_KEY, process.env.TWILIO_API_SECRET, {
-      accountSid: process.env.TWILIO_ACCOUNT_SID
-    });
+    this.client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
     this.phoneNumber = process.env.TWILIO_PHONE_NUMBER;
   }
 

@@ -6,11 +6,10 @@ const { asyncHandler, AppError } = require('../middleware/errorHandler');
 
 const router = express.Router();
 
-// Initialize Twilio client
+// Initialize Twilio client using Account SID and Auth Token
 const twilioClient = twilio(
-  process.env.TWILIO_API_KEY,
-  process.env.TWILIO_API_SECRET,
-  { accountSid: process.env.TWILIO_ACCOUNT_SID }
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
 );
 
 // Send SMS
