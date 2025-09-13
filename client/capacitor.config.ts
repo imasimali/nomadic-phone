@@ -5,19 +5,20 @@ const config: CapacitorConfig = {
   appName: 'Nomadic Phone',
   webDir: 'build',
   server: {
-    // Point to wherever you host your app
-    url: 'https://app-nomadic-phone.t1irgo.easypanel.host',
+    // For production, point to your hosted app
+    // url: 'https://app-nomadic-phone.t1irgo.easypanel.host',
 
-    // Or for local testing:
-    // url: 'http://192.168.0.102:3000',
-    // cleartext: true
+    // For local development, uncomment:
+    url: 'http://localhost:3000',
+    cleartext: true
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 2000,
+      launchShowDuration: 1500,
       backgroundColor: '#2c5aa0',
-      showSpinner: true,
-      spinnerColor: '#ffffff'
+      showSpinner: false,
+      androidSplashResourceName: 'splash',
+      iosSplashResourceName: 'Default'
     },
     StatusBar: {
       style: 'DARK',
@@ -26,7 +27,21 @@ const config: CapacitorConfig = {
     },
     CapacitorHttp: {
       enabled: true
+    },
+    Keyboard: {
+      resize: 'body',
+      style: 'DARK',
+      resizeOnFullScreen: true
     }
+  },
+  ios: {
+    contentInset: 'automatic',
+    scrollEnabled: true
+  },
+  android: {
+    allowMixedContent: true,
+    captureInput: true,
+    webContentsDebuggingEnabled: false
   }
 };
 

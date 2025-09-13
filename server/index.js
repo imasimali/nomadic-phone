@@ -20,41 +20,31 @@ const PORT = process.env.PORT || 3001;
 // Trust proxy for rate limiting
 app.set('trust proxy', 1);
 
-// Security middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://sdk.twilio.com"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      connectSrc: ["'self'", "wss:", "https:"],
-      mediaSrc: ["'self'", "https:"],
-    },
-  },
-}));
+// Basic security
+app.use(helmet());
 
-// Rate limiting
+// Simple rate limiting
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
-  message: 'Too many requests from this IP, please try again later.',
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+  message: 'Too many requests, please try again later.',
 });
 app.use('/api/', limiter);
 
-// CORS configuration
+// Simple CORS
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? process.env.APP_URL 
+  origin: process.env.NODE_ENV === 'production'
+    ? process.env.APP_URL
     : ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true,
 }));
 
-// Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Basic middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(compression());
 
-// Logging
+// Simple logging
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('combined'));
 }

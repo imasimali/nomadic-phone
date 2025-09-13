@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { Device, Call as TwilioCall } from '@twilio/voice-sdk';
 import { voiceAPI } from '../services/api';
 import { useAuth } from './AuthContext';
-import { requestMicrophonePermission, getPermissionErrorMessage } from '../utils/permissions';
+import { requestMicrophonePermission } from '../utils/permissions';
 
 interface VoiceContextType {
   device: Device | null;
@@ -63,58 +63,44 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
     try {
       setError(null);
 
-      // First, request microphone permission
+      // Request microphone permission
       const permissionResult = await requestMicrophonePermission();
       if (!permissionResult.granted) {
-        const errorMessage = getPermissionErrorMessage(permissionResult.error || 'Permission denied');
-        setError(errorMessage);
+        setError('Microphone permission required for voice calls');
         setIsReady(false);
         return;
       }
 
       // Get access token from backend
       const response = await voiceAPI.getToken();
-
-      // Check if the response indicates missing Twilio credentials
       if (response.status === 503) {
-        setError('Twilio credentials not configured. Please add your Twilio credentials to the .env file.');
+        setError('Twilio not configured');
         setIsReady(false);
         return;
       }
 
       const { token } = response.data;
 
-      // Create and setup Twilio Device
+      // Create Twilio Device
       const newDevice = new Device(token, {
         logLevel: 0,
         allowIncomingWhileBusy: true,
       });
 
-      // Device event listeners
+      // Simple device event listeners
       newDevice.on('registered', () => {
         setIsReady(true);
         setError(null);
       });
 
-      newDevice.on('ready', () => {
-        setIsReady(true);
-        setError(null);
-      });
-
-      newDevice.on('unregistered', () => {
-        setIsReady(false);
-      });
-
       newDevice.on('error', (error) => {
-        setError(error?.message || error?.toString() || 'Unknown device error');
+        setError(error?.message || 'Voice service error');
         setIsReady(false);
       });
 
       newDevice.on('incoming', (call) => {
         setIncomingCall(call);
         setCallStatus('incoming');
-
-        // Call event listeners
         setupCallListeners(call);
       });
 
@@ -123,36 +109,15 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
           const response = await voiceAPI.getToken();
           newDevice.updateToken(response.data.token);
         } catch (error: any) {
-          setError(error?.message || error?.toString() || 'Failed to refresh authentication token');
+          setError('Failed to refresh token');
         }
       });
 
-      // Register the device
       await newDevice.register();
       setDevice(newDevice);
 
     } catch (error: any) {
-
-      // Handle specific error cases
-      if (error?.response?.status === 503) {
-        setError(error.response.data?.message || 'Twilio credentials not configured. Please add your Twilio credentials to the .env file.');
-      } else {
-        let errorMessage = error?.message || error?.toString() || 'Failed to initialize voice service';
-
-        // Add specific guidance for common issues
-        if (error?.code === 31205) {
-          errorMessage += ' (Invalid access token - check TwiML Application configuration)';
-        } else if (error?.code === 31402) {
-          errorMessage = getPermissionErrorMessage('31402');
-        } else if (error?.message?.includes('token')) {
-          errorMessage += ' (Token issue - verify Twilio credentials and Application SID)';
-        } else if (error?.message?.includes('permission') || error?.message?.includes('microphone')) {
-          errorMessage = getPermissionErrorMessage(error.message);
-        }
-
-        setError(errorMessage);
-      }
-
+      setError(error?.response?.data?.message || error?.message || 'Failed to initialize voice service');
       setIsReady(false);
     }
   };
@@ -171,7 +136,6 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
 
   const setupCallListeners = (call: TwilioCall) => {
     call.on('accept', () => {
-      console.log('Call accepted');
       setActiveCall(call);
       setIncomingCall(null);
       setCallStatus('connected');
@@ -179,7 +143,6 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
     });
 
     call.on('disconnect', () => {
-      console.log('Call disconnected');
       setActiveCall(null);
       setIncomingCall(null);
       setCallStatus('');
@@ -188,20 +151,17 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
     });
 
     call.on('cancel', () => {
-      console.log('Call cancelled');
       setIncomingCall(null);
       setCallStatus('');
     });
 
     call.on('reject', () => {
-      console.log('Call rejected');
       setIncomingCall(null);
       setCallStatus('');
     });
 
     call.on('error', (error) => {
-      console.error('Call error:', error);
-      setError(error.message);
+      setError(error.message || 'Call error');
       setActiveCall(null);
       setIncomingCall(null);
       setCallStatus('');
@@ -227,8 +187,7 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
       setActiveCall(call);
 
     } catch (error: any) {
-      console.error('Failed to make call:', error);
-      setError(error?.message || error?.toString() || 'Failed to make call');
+      setError(error?.message || 'Failed to make call');
       setIsConnecting(false);
       setCallStatus('');
       throw error;
