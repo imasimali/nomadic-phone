@@ -20,8 +20,22 @@ const PORT = process.env.PORT || 3001;
 // Trust proxy for rate limiting
 app.set('trust proxy', 1);
 
-// Basic security
-app.use(helmet());
+// Basic security with permissive CSP for Twilio
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https:", "http:"],
+      connectSrc: ["'self'", "https:", "http:", "ws:", "wss:"],
+      mediaSrc: ["'self'", "https:", "http:", "blob:", "data:"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https:", "http:"],
+      fontSrc: ["'self'", "https:", "http:", "data:"],
+      imgSrc: ["'self'", "https:", "http:", "data:", "blob:"],
+      frameSrc: ["'self'", "https:", "http:"],
+      objectSrc: ["'none'"]
+    }
+  }
+}));
 
 // Simple rate limiting
 const limiter = rateLimit({
