@@ -20,7 +20,7 @@ import {
   Send,
 } from '@mui/icons-material';
 import { smsAPI, SMS } from '../../services/api';
-import ConversationView from './ConversationView';
+import Conversation from './Conversation';
 
 interface Conversation {
   phoneNumber: string;
@@ -116,7 +116,7 @@ const Chat: React.FC = () => {
   // Show individual conversation if selected
   if (selectedConversation) {
     return (
-      <ConversationView
+      <Conversation
         phoneNumber={selectedConversation}
         onBack={() => setSelectedConversation(null)}
       />
@@ -182,7 +182,7 @@ const Chat: React.FC = () => {
                   <ListItemText
                     primary={
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="subtitle1" fontWeight="medium">
+                        <Typography variant="subtitle1" fontWeight="medium" component="span">
                           {formatPhoneNumber(conversation.phoneNumber)}
                         </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -192,24 +192,26 @@ const Chat: React.FC = () => {
                             color="primary"
                             variant="outlined"
                           />
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography variant="caption" color="text.secondary" component="span">
                             {formatTime(conversation.lastMessageTime)}
                           </Typography>
                         </Box>
                       </Box>
                     }
                     secondary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }} component="span">
                         {conversation.direction === 'outbound' ? (
                           <Send sx={{ fontSize: 14, mr: 0.5, color: 'text.secondary' }} />
                         ) : (
                           <Phone sx={{ fontSize: 14, mr: 0.5, color: 'text.secondary' }} />
                         )}
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" color="text.secondary" component="span">
                           {truncateMessage(conversation.lastMessage)}
                         </Typography>
                       </Box>
                     }
+                    primaryTypographyProps={{ component: 'div' }}
+                    secondaryTypographyProps={{ component: 'div' }}
                   />
                 </ListItem>
               ))}

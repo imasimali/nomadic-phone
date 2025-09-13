@@ -28,11 +28,11 @@ import { useVoice } from '../../contexts/VoiceContext';
 import { voiceAPI, smsAPI, Call, SMS } from '../../services/api';
 import LoadingScreen from '../Common/LoadingScreen';
 
-interface DashboardHomeProps {
+interface HomeProps {
   onNavigateToTab?: (tab: string) => void;
 }
 
-const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateToTab }) => {
+const Home: React.FC<HomeProps> = ({ onNavigateToTab }) => {
   const { user } = useAuth();
   const { isReady, device } = useVoice();
   const [stats, setStats] = useState({
@@ -333,4 +333,4 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateToTab }) => {
   );
 };
 
-export default DashboardHome;
+export default Home;

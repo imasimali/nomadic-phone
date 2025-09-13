@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline, Box } from '@mui/material';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -54,7 +55,8 @@ const theme = createTheme({
   },
 });
 
-const AppContent: React.FC = () => {
+// Protected Route component
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -62,10 +64,48 @@ const AppContent: React.FC = () => {
   }
 
   if (!isAuthenticated) {
-    return <Login />;
+    return <Navigate to="/login" replace />;
   }
 
-  return <MobileApp />;
+  return <>{children}</>;
+};
+
+// Public Route component (redirects to dashboard if already authenticated)
+const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+const AppContent: React.FC = () => {
+  return (
+    <Routes>
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/*"
+        element={
+          <ProtectedRoute>
+            <MobileApp />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
+  );
 };
 
 function App() {
@@ -75,21 +115,23 @@ function App() {
   }, []);
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <AuthProvider>
-        <VoiceProvider>
-          <Box sx={{
-            minHeight: '100vh',
-            backgroundColor: 'background.default',
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
-            <AppContent />
-          </Box>
-        </VoiceProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <Router>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <AuthProvider>
+          <VoiceProvider>
+            <Box sx={{
+              minHeight: '100vh',
+              backgroundColor: 'background.default',
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
+              <AppContent />
+            </Box>
+          </VoiceProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </Router>
   );
 }
 

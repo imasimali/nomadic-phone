@@ -17,12 +17,12 @@ import {
 } from '@mui/icons-material';
 import { smsAPI, SMS } from '../../services/api';
 
-interface ConversationViewProps {
+interface ConversationProps {
   phoneNumber: string;
   onBack: () => void;
 }
 
-const ConversationView: React.FC<ConversationViewProps> = ({ phoneNumber, onBack }) => {
+const Conversation: React.FC<ConversationProps> = ({ phoneNumber, onBack }) => {
   const [messages, setMessages] = useState<SMS[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -271,4 +271,4 @@ const ConversationView: React.FC<ConversationViewProps> = ({ phoneNumber, onBack
   );
 };
 
-export default ConversationView;
+export default Conversation;

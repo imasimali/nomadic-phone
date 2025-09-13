@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   AppBar,
@@ -14,7 +15,6 @@ import {
   ListItemText,
   Divider,
   Badge,
-  Button,
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -28,21 +28,35 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useVoice } from '../contexts/VoiceContext';
-import VoicePanel from './Dashboard/VoicePanel';
-import SMSPanel from './Dashboard/SMSPanel';
+import Voice from './Dashboard/Voice';
+import SMS from './Dashboard/SMS';
 import Chat from './Dashboard/Chat';
 import Recordings from './Dashboard/Recordings';
 import Settings from './Dashboard/Settings';
-import DashboardHome from './Dashboard/DashboardHome';
+import Home from './Dashboard/Home';
 
 type TabValue = 'dashboard' | 'voice' | 'sms' | 'chats' | 'recordings';
 
 const MobileApp: React.FC = () => {
   const { user, logout } = useAuth();
   const { incomingCall } = useVoice();
-  const [currentTab, setCurrentTab] = useState<TabValue>('dashboard');
+  const navigate = useNavigate();
+  const location = useLocation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [showSettings, setShowSettings] = useState(false);
+
+  // Get current tab from URL
+  const getCurrentTab = (): TabValue => {
+    const path = location.pathname;
+    if (path === '/voice') return 'voice';
+    if (path === '/sms') return 'sms';
+    if (path === '/chats') return 'chats';
+    if (path === '/recordings') return 'recordings';
+    return 'dashboard';
+  };
+
+  const isSettingsPage = location.pathname === '/settings';
+
+  const currentTab = getCurrentTab();
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -58,29 +72,29 @@ const MobileApp: React.FC = () => {
   };
 
   const handleShowSettings = () => {
-    setShowSettings(true);
+    navigate('/settings');
     handleProfileMenuClose();
   };
 
-  const renderCurrentTab = () => {
-    if (showSettings) {
-      return <Settings />;
+  const handleTabChange = (tab: string) => {
+    if (tab === 'dashboard') {
+      navigate('/');
+    } else {
+      navigate(`/${tab}`);
     }
+  };
 
-    switch (currentTab) {
-      case 'dashboard':
-        return <DashboardHome onNavigateToTab={(tab) => setCurrentTab(tab as any)} />;
-      case 'voice':
-        return <VoicePanel />;
-      case 'sms':
-        return <SMSPanel />;
-      case 'chats':
-        return <Chat />;
-      case 'recordings':
-        return <Recordings />;
-      default:
-        return <DashboardHome />;
-    }
+  const renderCurrentTab = () => {
+    return (
+      <Routes>
+        <Route path="/" element={<Home onNavigateToTab={handleTabChange} />} />
+        <Route path="voice" element={<Voice />} />
+        <Route path="sms" element={<SMS />} />
+        <Route path="chats" element={<Chat />} />
+        <Route path="recordings" element={<Recordings />} />
+        <Route path="settings" element={<Settings />} />
+      </Routes>
+    );
   };
 
   return (
@@ -89,7 +103,7 @@ const MobileApp: React.FC = () => {
       <AppBar position="static" elevation={0}>
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            {showSettings ? 'Settings' :
+            {isSettingsPage ? 'Settings' :
              currentTab === 'dashboard' ? 'Dashboard' :
              currentTab === 'voice' ? 'Voice' :
              currentTab === 'sms' ? 'Messages' :
@@ -97,17 +111,6 @@ const MobileApp: React.FC = () => {
              currentTab === 'recordings' ? 'Recordings' :
              'Nomadic Phone'}
           </Typography>
-
-          {/* Back button when in settings */}
-          {showSettings && (
-            <Button
-              color="inherit"
-              onClick={() => setShowSettings(false)}
-              sx={{ mr: 1 }}
-            >
-              Back
-            </Button>
-          )}
           
           {/* User Menu */}
           <IconButton
@@ -166,7 +169,7 @@ const MobileApp: React.FC = () => {
       <Box sx={{
         flex: 1,
         overflow: 'auto',
-        pb: showSettings ? 2 : 8, // More space for bottom navigation
+        pb: 8, // Space for bottom navigation
         px: 2,
         pt: 2,
         minHeight: 0 // Important for flex child to be scrollable
@@ -175,10 +178,15 @@ const MobileApp: React.FC = () => {
       </Box>
 
       {/* Bottom Navigation */}
-      {!showSettings && (
-        <BottomNavigation
+      <BottomNavigation
           value={currentTab}
-          onChange={(_, newValue) => setCurrentTab(newValue)}
+          onChange={(_, newValue) => {
+            if (newValue === 'dashboard') {
+              navigate('/');
+            } else {
+              navigate(`/${newValue}`);
+            }
+          }}
           sx={{
             position: 'fixed',
             bottom: 0,
@@ -224,7 +232,6 @@ const MobileApp: React.FC = () => {
           icon={<RecordVoiceOver />}
         />
         </BottomNavigation>
-      )}
     </Box>
   );
 };

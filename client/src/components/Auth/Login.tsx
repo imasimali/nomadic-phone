@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -40,7 +40,7 @@ const Login: React.FC = () => {
 
     try {
       await login(formData.password);
-      navigate('/dashboard');
+      navigate('/');
     } catch (error: any) {
       setError(error.message);
     } finally {

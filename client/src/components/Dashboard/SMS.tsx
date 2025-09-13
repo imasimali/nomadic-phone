@@ -14,7 +14,7 @@ import {
 } from '@mui/icons-material';
 import { smsAPI } from '../../services/api';
 
-const SMSPanel: React.FC = () => {
+const SMS: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -146,4 +146,4 @@ const SMSPanel: React.FC = () => {
   );
 };
 
-export default SMSPanel;
+export default SMS;

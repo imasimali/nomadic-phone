@@ -22,7 +22,7 @@ import {
 } from '@mui/icons-material';
 import { useVoice } from '../../contexts/VoiceContext';
 
-const VoicePanel: React.FC = () => {
+const Voice: React.FC = () => {
   const {
     isReady,
     isConnecting,
@@ -185,4 +185,4 @@ const VoicePanel: React.FC = () => {
   );
 };
 
-export default VoicePanel;
+export default Voice;
