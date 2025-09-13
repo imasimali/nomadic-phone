@@ -125,14 +125,96 @@ class TwilioService {
     }
   }
 
+  // Get all recordings
+  async getRecordings(options = {}) {
+    const { limit = 20 } = options;
+
+    try {
+      const twilioOptions = {
+        limit: Math.min(limit, 50),
+      };
+
+      const recordings = await this.client.recordings.list(twilioOptions);
+
+      // For each recording, fetch the associated call details
+      const recordingsWithCallDetails = await Promise.all(
+        recordings.map(async (recording) => {
+          try {
+            // Fetch call details for this recording
+            const call = await this.client.calls(recording.callSid).fetch();
+
+            return {
+              id: recording.sid,
+              recording_sid: recording.sid,
+              call_sid: recording.callSid,
+              duration: recording.duration ? parseInt(recording.duration) : null,
+              recording_duration: recording.duration ? parseInt(recording.duration) : null,
+              status: recording.status,
+              recording_url: `/api/voice/recordings/${recording.sid}`, // Use our proxy endpoint
+              uri: recording.uri,
+              date_created: recording.dateCreated,
+              date_updated: recording.dateUpdated,
+              created_at: recording.dateCreated,
+              updated_at: recording.dateUpdated,
+              // Call details
+              from_number: call.from,
+              to_number: call.to,
+              direction: call.direction,
+              call_status: call.status,
+              call_duration: call.duration ? parseInt(call.duration) : null,
+              start_time: call.startTime,
+              end_time: call.endTime
+            };
+          } catch (callError) {
+            console.warn(`Could not fetch call details for recording ${recording.sid}:`, callError.message);
+            // Return recording without call details if call fetch fails
+            return {
+              id: recording.sid,
+              recording_sid: recording.sid,
+              call_sid: recording.callSid,
+              duration: recording.duration ? parseInt(recording.duration) : null,
+              recording_duration: recording.duration ? parseInt(recording.duration) : null,
+              status: recording.status,
+              recording_url: `/api/voice/recordings/${recording.sid}`,
+              uri: recording.uri,
+              date_created: recording.dateCreated,
+              date_updated: recording.dateUpdated,
+              created_at: recording.dateCreated,
+              updated_at: recording.dateUpdated,
+              // Default values when call details are unavailable
+              from_number: 'Unknown',
+              to_number: 'Unknown',
+              direction: 'unknown',
+              call_status: 'unknown',
+              call_duration: null,
+              start_time: null,
+              end_time: null
+            };
+          }
+        })
+      );
+
+      // Sort by creation date (newest first)
+      recordingsWithCallDetails.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      return {
+        recordings: recordingsWithCallDetails,
+        pagination: {
+          page: 1,
+          limit: recordingsWithCallDetails.length,
+          total: recordingsWithCallDetails.length,
+          pages: 1
+        }
+      };
+
+    } catch (error) {
+      console.error('Error fetching recordings from Twilio:', error);
+      throw new Error(`Failed to fetch recordings: ${error.message}`);
+    }
+  }
+
   // Get a specific recording
   async getRecording(recordingSid) {
-    const cacheKey = this.getCacheKey('recording', { recordingSid });
-    const cached = this.getFromCache(cacheKey);
-    if (cached) {
-      return cached;
-    }
-
     try {
       const recording = await this.client.recordings(recordingSid).fetch();
 
@@ -146,7 +228,6 @@ class TwilioService {
         date_updated: recording.dateUpdated
       };
 
-      this.setCache(cacheKey, transformedRecording);
       return transformedRecording;
 
     } catch (error) {

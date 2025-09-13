@@ -134,6 +134,29 @@ export interface Conversation {
   last_message_direction: 'inbound' | 'outbound';
 }
 
+export interface Recording {
+  id: string;
+  recording_sid: string;
+  call_sid: string;
+  duration?: number;
+  recording_duration?: number;
+  status: string;
+  recording_url: string;
+  uri: string;
+  date_created: string;
+  date_updated: string;
+  created_at: string;
+  updated_at: string;
+  // Call details
+  from_number: string;
+  to_number: string;
+  direction: 'inbound' | 'outbound' | 'unknown';
+  call_status: string;
+  call_duration?: number;
+  start_time?: string;
+  end_time?: string;
+}
+
 export interface VoiceSettings {
   incoming_call_action: 'recording' | 'client' | 'redirect';
   redirect_number?: string;
@@ -164,18 +187,21 @@ export const authAPI = {
 // Voice API
 export const voiceAPI = {
   getToken: () => api.get('/voice/token'),
-  
+
   makeCall: (to: string) => api.post('/voice/call', { to }),
-  
+
   getCalls: (params?: { page?: number; limit?: number; direction?: string; status?: string }) =>
     api.get('/voice/calls', { params }),
-  
+
   getCall: (callSid: string) => api.get(`/voice/calls/${callSid}`),
-  
+
   hangupCall: (callSid: string) => api.post(`/voice/calls/${callSid}/hangup`),
-  
+
+  getRecordings: (params?: { page?: number; limit?: number }) =>
+    api.get('/voice/recordings', { params }),
+
   getSettings: () => api.get('/voice/settings'),
-  
+
   updateSettings: (settings: Partial<VoiceSettings>) =>
     api.put('/voice/settings', settings),
 };

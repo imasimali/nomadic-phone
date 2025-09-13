@@ -11,6 +11,7 @@ import {
   Alert,
   Button,
   IconButton,
+  CircularProgress,
 } from '@mui/material';
 import {
   PlayArrow,
@@ -21,28 +22,36 @@ import {
   RecordVoiceOver,
   Pause,
 } from '@mui/icons-material';
-import { voiceAPI, Call } from '../../services/api';
+import { voiceAPI, Recording } from '../../services/api';
 
 const Recordings: React.FC = () => {
-  const [recordings, setRecordings] = useState<Call[]>([]);
+  const [recordings, setRecordings] = useState<Recording[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [playingRecording, setPlayingRecording] = useState<string | null>(null);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const [loadingAudio, setLoadingAudio] = useState<string | null>(null);
 
   useEffect(() => {
     loadRecordings();
   }, []);
 
+  // Cleanup audio when component unmounts
+  useEffect(() => {
+    return () => {
+      if (audioElement) {
+        audioElement.pause();
+        audioElement.currentTime = 0;
+      }
+    };
+  }, [audioElement]);
+
   const loadRecordings = async () => {
     try {
       setLoading(true);
       setError('');
-      const response = await voiceAPI.getCalls({ limit: 50 });
-      // Filter calls that have recordings
-      const callsWithRecordings = (response.data.calls || []).filter(
-        (call: Call) => call.recording_url && call.recording_sid
-      );
-      setRecordings(callsWithRecordings);
+      const response = await voiceAPI.getRecordings({ limit: 50 });
+      setRecordings(response.data.recordings || []);
     } catch (error: any) {
       setError(error.response?.data?.error || 'Failed to load recordings');
     } finally {
@@ -79,33 +88,123 @@ const Recordings: React.FC = () => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const getCallNumber = (call: Call) => {
-    return call.direction === 'outbound' ? call.to_number : call.from_number;
+  const getCallNumber = (recording: Recording) => {
+    return recording.direction === 'outbound' ? recording.to_number : recording.from_number;
   };
 
-  const handlePlayPause = (recordingUrl: string) => {
+  const handlePlayPause = async (recordingUrl: string) => {
     if (playingRecording === recordingUrl) {
+      // Stop current playback
+      if (audioElement) {
+        audioElement.pause();
+        audioElement.currentTime = 0;
+      }
       setPlayingRecording(null);
-      // In a real implementation, you'd pause the audio here
+      setAudioElement(null);
     } else {
-      setPlayingRecording(recordingUrl);
-      // In a real implementation, you'd start playing the audio here
-      // For now, we'll just simulate playing for 3 seconds
-      setTimeout(() => {
+      // Stop any currently playing audio
+      if (audioElement) {
+        audioElement.pause();
+        audioElement.currentTime = 0;
+      }
+
+      try {
+        setLoadingAudio(recordingUrl);
+
+        // Fetch the audio file with authentication
+        const response = await fetch(recordingUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to load recording: ${response.statusText}`);
+        }
+
+        // Create blob URL for the audio
+        const blob = await response.blob();
+        const audioUrl = URL.createObjectURL(blob);
+
+        // Create new audio element and start playing
+        const audio = new Audio(audioUrl);
+        audio.preload = 'auto';
+
+        audio.addEventListener('loadstart', () => {
+          console.log('Loading recording...');
+        });
+
+        audio.addEventListener('canplay', () => {
+          console.log('Recording ready to play');
+        });
+
+        audio.addEventListener('ended', () => {
+          setPlayingRecording(null);
+          setAudioElement(null);
+          setLoadingAudio(null);
+          URL.revokeObjectURL(audioUrl); // Clean up blob URL
+        });
+
+        audio.addEventListener('error', (e) => {
+          console.error('Error playing recording:', e);
+          setError('Failed to play recording');
+          setPlayingRecording(null);
+          setAudioElement(null);
+          setLoadingAudio(null);
+          URL.revokeObjectURL(audioUrl); // Clean up blob URL
+        });
+
+        setAudioElement(audio);
+        setPlayingRecording(recordingUrl);
+        setLoadingAudio(null);
+
+        await audio.play();
+
+      } catch (error) {
+        console.error('Error starting playback:', error);
+        setError('Failed to start playback. Please try again.');
         setPlayingRecording(null);
-      }, 3000);
+        setAudioElement(null);
+        setLoadingAudio(null);
+      }
     }
   };
 
-  const handleDownload = (call: Call) => {
-    if (call.recording_url) {
-      // Create a temporary link to download the recording
+  const handleDownload = async (recording: Recording) => {
+    if (!recording.recording_url) return;
+
+    try {
+      // Use fetch to download the recording with proper authentication
+      const response = await fetch(recording.recording_url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to download recording: ${response.statusText}`);
+      }
+
+      // Create blob from response
+      const blob = await response.blob();
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = call.recording_url;
-      link.download = `recording-${call.call_sid}.mp3`;
+      link.href = url;
+      link.download = `recording-${recording.recording_sid}.mp3`;
       document.body.appendChild(link);
       link.click();
+
+      // Cleanup
       document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+    } catch (error) {
+      console.error('Error downloading recording:', error);
+      setError('Failed to download recording. Please try again.');
     }
   };
 
@@ -153,23 +252,30 @@ const Recordings: React.FC = () => {
             </Box>
           ) : (
             <List>
-              {recordings.map((call, index) => (
+              {recordings.map((recording, index) => (
                 <ListItem
-                  key={call.id}
+                  key={recording.id}
                   divider={index < recordings.length - 1}
                   sx={{ py: 2 }}
                   secondaryAction={
                     <Box sx={{ display: 'flex', gap: 1 }}>
                       <IconButton
                         edge="end"
-                        onClick={() => call.recording_url && handlePlayPause(call.recording_url)}
+                        onClick={() => recording.recording_url && handlePlayPause(recording.recording_url)}
                         color="primary"
+                        disabled={loadingAudio === recording.recording_url}
                       >
-                        {playingRecording === call.recording_url ? <Pause /> : <PlayArrow />}
+                        {loadingAudio === recording.recording_url ? (
+                          <CircularProgress size={20} />
+                        ) : playingRecording === recording.recording_url ? (
+                          <Pause />
+                        ) : (
+                          <PlayArrow />
+                        )}
                       </IconButton>
                       <IconButton
                         edge="end"
-                        onClick={() => handleDownload(call)}
+                        onClick={() => handleDownload(recording)}
                         color="primary"
                       >
                         <Download />
@@ -178,11 +284,11 @@ const Recordings: React.FC = () => {
                   }
                 >
                   <ListItemIcon>
-                    {call.direction === 'inbound' ? <CallReceived color="success" /> : <CallMade color="info" />}
+                    {recording.direction === 'inbound' ? <CallReceived color="success" /> : <CallMade color="info" />}
                   </ListItemIcon>
                   <ListItemText
-                    primary={formatPhoneNumber(getCallNumber(call))}
-                    secondary={`${formatDate(call.created_at)} • ${formatDuration(call.recording_duration || call.duration || 0)} • ${call.direction}`}
+                    primary={formatPhoneNumber(getCallNumber(recording))}
+                    secondary={`${formatDate(recording.created_at)} • ${formatDuration(recording.recording_duration || recording.duration || 0)} • ${recording.direction}`}
                   />
                 </ListItem>
               ))}

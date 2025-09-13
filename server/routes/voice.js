@@ -1,6 +1,7 @@
 const express = require('express');
 const { body, query, validationResult } = require('express-validator');
 const twilio = require('twilio');
+const axios = require('axios');
 const twilioService = require('../services/twilioService');
 const { asyncHandler, AppError } = require('../middleware/errorHandler');
 
@@ -144,6 +145,35 @@ router.get('/calls', [
   }
 }));
 
+// Get recordings
+router.get('/recordings', [
+  query('page').optional().isInt({ min: 1 }).toInt(),
+  query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
+], asyncHandler(async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      details: errors.array(),
+    });
+  }
+
+  const page = req.query.page || 1;
+  const limit = req.query.limit || 20;
+
+  try {
+    const result = await twilioService.getRecordings({
+      page,
+      limit
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error fetching recordings:', error);
+    throw new AppError('Failed to fetch recordings', 500, 'FETCH_RECORDINGS_FAILED');
+  }
+}));
+
 // Get specific call details
 router.get('/calls/:callSid', asyncHandler(async (req, res) => {
   const { callSid } = req.params;
@@ -264,7 +294,6 @@ router.get('/recordings/:recordingSid', asyncHandler(async (req, res) => {
     });
 
     // Use Twilio client to fetch the recording with proper authentication
-    const axios = require('axios');
     const response = await axios.get(recordingUrl, {
       auth: {
         username: process.env.TWILIO_API_KEY,
