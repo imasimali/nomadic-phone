@@ -14,11 +14,15 @@ import {
   ListItemText,
   Divider,
   Badge,
+  Button,
 } from '@mui/material';
 import {
+  Dashboard as DashboardIcon,
   Phone,
   Message,
-  History,
+  Chat as ChatIcon,
+  RecordVoiceOver,
+  Settings as SettingsIcon,
   AccountCircle,
   Logout,
 } from '@mui/icons-material';
@@ -26,15 +30,19 @@ import { useAuth } from '../contexts/AuthContext';
 import { useVoice } from '../contexts/VoiceContext';
 import VoicePanel from './Dashboard/VoicePanel';
 import SMSPanel from './Dashboard/SMSPanel';
-import CallHistory from './Dashboard/CallHistory';
+import Chat from './Dashboard/Chat';
+import Recordings from './Dashboard/Recordings';
+import Settings from './Dashboard/Settings';
+import DashboardHome from './Dashboard/DashboardHome';
 
-type TabValue = 'voice' | 'sms' | 'history';
+type TabValue = 'dashboard' | 'voice' | 'sms' | 'chats' | 'recordings';
 
 const MobileApp: React.FC = () => {
   const { user, logout } = useAuth();
   const { incomingCall } = useVoice();
-  const [currentTab, setCurrentTab] = useState<TabValue>('voice');
+  const [currentTab, setCurrentTab] = useState<TabValue>('dashboard');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -49,16 +57,29 @@ const MobileApp: React.FC = () => {
     handleProfileMenuClose();
   };
 
+  const handleShowSettings = () => {
+    setShowSettings(true);
+    handleProfileMenuClose();
+  };
+
   const renderCurrentTab = () => {
+    if (showSettings) {
+      return <Settings />;
+    }
+
     switch (currentTab) {
+      case 'dashboard':
+        return <DashboardHome onNavigateToTab={(tab) => setCurrentTab(tab as any)} />;
       case 'voice':
         return <VoicePanel />;
       case 'sms':
         return <SMSPanel />;
-      case 'history':
-        return <CallHistory />;
+      case 'chats':
+        return <Chat />;
+      case 'recordings':
+        return <Recordings />;
       default:
-        return <VoicePanel />;
+        return <DashboardHome />;
     }
   };
 
@@ -68,8 +89,25 @@ const MobileApp: React.FC = () => {
       <AppBar position="static" elevation={0}>
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Nomadic Phone
+            {showSettings ? 'Settings' :
+             currentTab === 'dashboard' ? 'Dashboard' :
+             currentTab === 'voice' ? 'Voice' :
+             currentTab === 'sms' ? 'Messages' :
+             currentTab === 'chats' ? 'Chats' :
+             currentTab === 'recordings' ? 'Recordings' :
+             'Nomadic Phone'}
           </Typography>
+
+          {/* Back button when in settings */}
+          {showSettings && (
+            <Button
+              color="inherit"
+              onClick={() => setShowSettings(false)}
+              sx={{ mr: 1 }}
+            >
+              Back
+            </Button>
+          )}
           
           {/* User Menu */}
           <IconButton
@@ -108,6 +146,12 @@ const MobileApp: React.FC = () => {
               </ListItemText>
             </MenuItem>
             <Divider />
+            <MenuItem onClick={handleShowSettings}>
+              <ListItemIcon>
+                <SettingsIcon fontSize="small" />
+              </ListItemIcon>
+              Settings
+            </MenuItem>
             <MenuItem onClick={handleLogout}>
               <ListItemIcon>
                 <Logout fontSize="small" />
@@ -119,31 +163,38 @@ const MobileApp: React.FC = () => {
       </AppBar>
 
       {/* Main Content Area */}
-      <Box sx={{ 
-        flex: 1, 
+      <Box sx={{
+        flex: 1,
         overflow: 'auto',
-        pb: 7, // Space for bottom navigation
+        pb: showSettings ? 2 : 8, // More space for bottom navigation
         px: 2,
-        pt: 2
+        pt: 2,
+        minHeight: 0 // Important for flex child to be scrollable
       }}>
         {renderCurrentTab()}
       </Box>
 
       {/* Bottom Navigation */}
-      <BottomNavigation
-        value={currentTab}
-        onChange={(_, newValue) => setCurrentTab(newValue)}
-        sx={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          borderTop: 1,
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
-          zIndex: 1000,
-        }}
-      >
+      {!showSettings && (
+        <BottomNavigation
+          value={currentTab}
+          onChange={(_, newValue) => setCurrentTab(newValue)}
+          sx={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            borderTop: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            zIndex: 1000,
+          }}
+        >
+        <BottomNavigationAction
+          label="Dashboard"
+          value="dashboard"
+          icon={<DashboardIcon />}
+        />
         <BottomNavigationAction
           label="Voice"
           value="voice"
@@ -163,11 +214,17 @@ const MobileApp: React.FC = () => {
           icon={<Message />}
         />
         <BottomNavigationAction
-          label="History"
-          value="history"
-          icon={<History />}
+          label="Chats"
+          value="chats"
+          icon={<ChatIcon />}
         />
-      </BottomNavigation>
+        <BottomNavigationAction
+          label="Recordings"
+          value="recordings"
+          icon={<RecordVoiceOver />}
+        />
+        </BottomNavigation>
+      )}
     </Box>
   );
 };

@@ -28,7 +28,11 @@ import { useVoice } from '../../contexts/VoiceContext';
 import { voiceAPI, smsAPI, Call, SMS } from '../../services/api';
 import LoadingScreen from '../Common/LoadingScreen';
 
-const DashboardHome: React.FC = () => {
+interface DashboardHomeProps {
+  onNavigateToTab?: (tab: string) => void;
+}
+
+const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateToTab }) => {
   const { user } = useAuth();
   const { isReady, device } = useVoice();
   const [stats, setStats] = useState({
@@ -213,7 +217,7 @@ const DashboardHome: React.FC = () => {
                 variant="outlined"
                 fullWidth
                 sx={{ mt: 2 }}
-                onClick={() => window.location.href = '/dashboard/history'}
+                onClick={() => onNavigateToTab?.('recordings')}
               >
                 View All Calls
               </Button>
@@ -265,7 +269,7 @@ const DashboardHome: React.FC = () => {
                 variant="outlined"
                 fullWidth
                 sx={{ mt: 2 }}
-                onClick={() => window.location.href = '/dashboard/sms'}
+                onClick={() => onNavigateToTab?.('chats')}
               >
                 View All Messages
               </Button>
@@ -286,7 +290,7 @@ const DashboardHome: React.FC = () => {
                     variant="contained"
                     fullWidth
                     startIcon={<Phone />}
-                    onClick={() => window.location.href = '/dashboard/voice'}
+                    onClick={() => onNavigateToTab?.('voice')}
                     disabled={!isReady}
                   >
                     Make Call
@@ -297,7 +301,7 @@ const DashboardHome: React.FC = () => {
                     variant="contained"
                     fullWidth
                     startIcon={<Message />}
-                    onClick={() => window.location.href = '/dashboard/sms'}
+                    onClick={() => onNavigateToTab?.('sms')}
                   >
                     Send SMS
                   </Button>
@@ -306,18 +310,18 @@ const DashboardHome: React.FC = () => {
                   <Button
                     variant="outlined"
                     fullWidth
-                    onClick={() => window.location.href = '/dashboard/history'}
+                    onClick={() => onNavigateToTab?.('chats')}
                   >
-                    View History
+                    View Chats
                   </Button>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
                   <Button
                     variant="outlined"
                     fullWidth
-                    onClick={() => window.location.href = '/dashboard/settings'}
+                    onClick={() => onNavigateToTab?.('recordings')}
                   >
-                    Settings
+                    Recordings
                   </Button>
                 </Grid>
               </Grid>
