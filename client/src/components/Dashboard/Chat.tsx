@@ -22,7 +22,7 @@ import {
 import { smsAPI, SMS } from '../../services/api';
 import Conversation from './Conversation';
 
-interface Conversation {
+interface ChatConversation {
   phoneNumber: string;
   lastMessage: string;
   lastMessageTime: string;
@@ -31,7 +31,7 @@ interface Conversation {
 }
 
 const Chat: React.FC = () => {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
@@ -47,11 +47,11 @@ const Chat: React.FC = () => {
       const response = await smsAPI.getMessages({ limit: 100 });
       
       // Group messages by phone number to create conversations
-      const conversationMap = new Map<string, Conversation>();
-      
+      const conversationMap = new Map<string, ChatConversation>();
+
       (response.data.messages || []).forEach((message: SMS) => {
         const otherNumber = message.direction === 'outbound' ? message.to_number : message.from_number;
-        
+
         if (!conversationMap.has(otherNumber)) {
           conversationMap.set(otherNumber, {
             phoneNumber: otherNumber,

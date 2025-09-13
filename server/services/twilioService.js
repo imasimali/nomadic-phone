@@ -164,39 +164,72 @@ class TwilioService {
         limit: Math.min(limit, 50),
       };
 
-      // Add filters if provided
+      // Always filter by our phone number to ensure we only get messages to/from our number
       if (this.phoneNumber) {
         if (direction === 'inbound') {
           twilioOptions.to = this.phoneNumber;
         } else if (direction === 'outbound') {
           twilioOptions.from = this.phoneNumber;
+        } else {
+          // When no direction is specified, we need to get both inbound and outbound
+          // We'll fetch both and combine them
         }
       }
 
-      const messages = await this.client.messages.list(twilioOptions);
+      let messages;
+      if (!direction && this.phoneNumber) {
+        // Fetch both inbound and outbound messages separately
+        const [inboundMessages, outboundMessages] = await Promise.all([
+          this.client.messages.list({ ...twilioOptions, to: this.phoneNumber }),
+          this.client.messages.list({ ...twilioOptions, from: this.phoneNumber })
+        ]);
+        messages = [...inboundMessages, ...outboundMessages];
+      } else {
+        messages = await this.client.messages.list(twilioOptions);
+      }
 
-      // Simple transformation
-      const transformedMessages = messages.map(message => ({
-        id: message.sid,
-        message_sid: message.sid,
-        from_number: message.from,
-        to_number: message.to,
-        direction: message.direction,
-        body: message.body,
-        status: message.status,
-        created_at: message.dateCreated,
-        updated_at: message.dateUpdated
-      }));
+      // Transform messages and ensure correct direction
+      const transformedMessages = messages.map(message => {
+        // Determine direction based on our phone number
+        let messageDirection = message.direction;
+        if (this.phoneNumber) {
+          if (message.from === this.phoneNumber) {
+            messageDirection = 'outbound';
+          } else if (message.to === this.phoneNumber) {
+            messageDirection = 'inbound';
+          }
+        }
+
+        return {
+          id: message.sid,
+          message_sid: message.sid,
+          from_number: message.from,
+          to_number: message.to,
+          direction: messageDirection,
+          body: message.body,
+          status: message.status,
+          created_at: message.dateCreated,
+          updated_at: message.dateUpdated
+        };
+      });
+
+      // Remove duplicates (in case a message appears in both inbound and outbound lists)
+      const uniqueMessages = transformedMessages.reduce((acc, message) => {
+        if (!acc.find(m => m.message_sid === message.message_sid)) {
+          acc.push(message);
+        }
+        return acc;
+      }, []);
 
       // Sort by creation date (newest first)
-      transformedMessages.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      uniqueMessages.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
       return {
-        messages: transformedMessages,
+        messages: uniqueMessages,
         pagination: {
           page: 1,
-          limit: transformedMessages.length,
-          total: transformedMessages.length,
+          limit: uniqueMessages.length,
+          total: uniqueMessages.length,
           pages: 1
         }
       };

@@ -46,11 +46,11 @@ const Conversation: React.FC<ConversationProps> = ({ phoneNumber, onBack }) => {
     try {
       setLoading(true);
       setError('');
-      
+
       // Get all messages and filter by phone number
       const response = await smsAPI.getMessages({ limit: 100 });
       const allMessages = response.data.messages || [];
-      
+
       // Filter messages for this conversation
       const conversationMessages = allMessages.filter((msg: SMS) => {
         const otherNumber = msg.direction === 'outbound' ? msg.to_number : msg.from_number;
@@ -59,7 +59,7 @@ const Conversation: React.FC<ConversationProps> = ({ phoneNumber, onBack }) => {
 
       // Sort by date (oldest first for conversation view)
       conversationMessages.sort((a: SMS, b: SMS) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-      
+
       setMessages(conversationMessages);
     } catch (error: any) {
       setError(error.response?.data?.error || 'Failed to load messages');
