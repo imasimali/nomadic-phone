@@ -9,53 +9,44 @@ export const isLoadingAtom = atom<boolean>(true)
 export const isAuthenticatedAtom = atom((get) => !!get(userAtom))
 
 // Auth actions
-const loginAction = atom(
-  null,
-  async (get, set, password: string) => {
+const loginAction = atom(null, async (get, set, password: string) => {
+  try {
+    const response = await authAPI.login(password)
+    const { user: userData, tokens } = response.data
+
+    localStorage.setItem('accessToken', tokens.accessToken)
+    localStorage.setItem('refreshToken', tokens.refreshToken)
+    set(userAtom, userData)
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Login failed')
+  }
+})
+
+const logoutAction = atom(null, (_get, set) => {
+  localStorage.removeItem('accessToken')
+  localStorage.removeItem('refreshToken')
+  set(userAtom, null)
+
+  // Call logout endpoint to invalidate token on server (optional)
+  authAPI.logout().catch(() => {
+    // Ignore errors on logout
+  })
+})
+
+const checkAuthAction = atom(null, async (_get, set) => {
+  const token = localStorage.getItem('accessToken')
+  if (token) {
     try {
-      const response = await authAPI.login(password)
-      const { user: userData, tokens } = response.data
-
-      localStorage.setItem('accessToken', tokens.accessToken)
-      localStorage.setItem('refreshToken', tokens.refreshToken)
-      set(userAtom, userData)
-    } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Login failed')
+      const response = await authAPI.getProfile()
+      set(userAtom, response.data.user)
+    } catch (error) {
+      // Token is invalid, remove it
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
     }
   }
-)
-
-const logoutAction = atom(
-  null,
-  (_get, set) => {
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('refreshToken')
-    set(userAtom, null)
-
-    // Call logout endpoint to invalidate token on server (optional)
-    authAPI.logout().catch(() => {
-      // Ignore errors on logout
-    })
-  }
-)
-
-const checkAuthAction = atom(
-  null,
-  async (_get, set) => {
-    const token = localStorage.getItem('accessToken')
-    if (token) {
-      try {
-        const response = await authAPI.getProfile()
-        set(userAtom, response.data.user)
-      } catch (error) {
-        // Token is invalid, remove it
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('refreshToken')
-      }
-    }
-    set(isLoadingAtom, false)
-  }
-)
+  set(isLoadingAtom, false)
+})
 
 // Custom hook to replace useAuth
 export const useAuth = () => {

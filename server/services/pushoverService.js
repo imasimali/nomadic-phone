@@ -163,9 +163,7 @@ class PushoverService {
     const icon = hasMedia ? '📷' : '💬'
 
     // Truncate message body for notification (keep it concise)
-    const truncatedBody = messageBody && messageBody.length > 100
-      ? messageBody.substring(0, 100) + '...'
-      : messageBody || (hasMedia ? '[Media message]' : '[Empty message]')
+    const truncatedBody = messageBody && messageBody.length > 100 ? messageBody.substring(0, 100) + '...' : messageBody || (hasMedia ? '[Media message]' : '[Empty message]')
 
     return this.sendNotification({
       title: `${icon} New ${messageType}`,

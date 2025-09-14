@@ -127,7 +127,7 @@ const Chat: React.FC = () => {
               minHeight: 32,
               fontSize: '0.8rem',
               px: 2,
-              py: 0.5
+              py: 0.5,
             }}
           >
             New Message
@@ -142,7 +142,7 @@ const Chat: React.FC = () => {
                 color: 'primary.main',
                 '&:hover': { bgcolor: 'primary.light', opacity: 0.1 },
                 width: 32,
-                height: 32
+                height: 32,
               }}
             >
               <Refresh sx={{ fontSize: 16 }} />
