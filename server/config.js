@@ -23,8 +23,10 @@ export default {
   NOMADIC_API_KEY_SID: process.env.NOMADIC_API_KEY_SID,
   NOMADIC_API_SECRET: process.env.NOMADIC_API_SECRET,
   // Voice configuration
-  INCOMING_CALL_ACTION: process.env.INCOMING_CALL_ACTION || 'recording',
   REDIRECT_NUMBER: process.env.REDIRECT_NUMBER,
   VOICE_MESSAGE: process.env.VOICE_MESSAGE || 'Please leave a message after the beep.',
   VOICE_MISSING_RECORD: process.env.VOICE_MISSING_RECORD || 'No message was recorded. Goodbye.',
+  // Pushover configuration
+  PUSHOVER_USER_KEY: process.env.PUSHOVER_USER_KEY,
+  PUSHOVER_API_TOKEN: process.env.PUSHOVER_API_TOKEN,
 }

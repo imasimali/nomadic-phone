@@ -186,16 +186,15 @@ router.get(
 router.get(
   '/settings',
   asyncHandler(async (_req, res) => {
-    // Return default settings since we don't have a database
-    const defaultSettings = {
-      incoming_call_action: 'recording',
-      redirect_number: '',
+    // Return current settings from environment
+    const settings = {
+      redirect_number: process.env.REDIRECT_NUMBER || '',
       voice_message: process.env.VOICE_MESSAGE || "Hello, you've reached my voicemail. Please leave a message after the beep and press star to finish.",
       voice_language: process.env.VOICE_LANGUAGE || 'en-US',
-      email_notifications: true,
+      push_notifications: !!(process.env.PUSHOVER_USER_KEY && process.env.PUSHOVER_API_TOKEN),
     }
 
-    res.json({ settings: defaultSettings })
+    res.json({ settings })
   }),
 )
 
@@ -203,7 +202,6 @@ router.get(
 router.put(
   '/settings',
   [
-    body('incoming_call_action').optional().isIn(['recording', 'client', 'redirect']).withMessage('Invalid incoming call action'),
     body('redirect_number')
       .optional()
       .matches(/^\+[1-9]\d{1,14}$/)
@@ -220,24 +218,19 @@ router.put(
       })
     }
 
-    const allowedSettings = ['incoming_call_action', 'redirect_number', 'voice_language', 'voice_message']
+    // Note: In this simplified version, settings are managed via environment variables
+    // This endpoint is kept for API compatibility but doesn't actually update settings
+    console.log('Voice settings update requested:', req.body)
 
-    const updates = []
-    for (const [key, value] of Object.entries(req.body)) {
-      if (allowedSettings.includes(key) && value !== undefined) {
-        updates.push({ key, value: value.toString(), user_id: req.user.id })
-      }
-    }
-
-    if (updates.length === 0) {
-      throw new AppError('No valid settings to update', 400, 'NO_UPDATE_DATA')
-    }
-
-    // Since we don't have a database, just return success
-    // In a real implementation, you might want to store these in environment variables
-    // or a simple JSON file
     res.json({
-      message: 'Settings updated successfully',
+      message: 'Settings received. Note: Settings are currently managed via environment variables.',
+      received: req.body,
+      current_settings: {
+        redirect_number: process.env.REDIRECT_NUMBER || '',
+        voice_message: process.env.VOICE_MESSAGE || "Hello, you've reached my voicemail. Please leave a message after the beep and press star to finish.",
+        voice_language: process.env.VOICE_LANGUAGE || 'en-US',
+        push_notifications: !!(process.env.PUSHOVER_USER_KEY && process.env.PUSHOVER_API_TOKEN),
+      }
     })
   }),
 )

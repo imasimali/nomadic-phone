@@ -6,6 +6,8 @@ A simple web-based phone system built with Node.js, React, and Twilio APIs.
 
 - **Voice Calls**: Make and receive calls in your browser using WebRTC
 - **SMS Messages**: Send and receive text messages with conversation threading
+- **Push Notifications**: Get notified of incoming calls and voicemails via Pushover
+- **Voicemail System**: Automatic voicemail for unanswered calls with notifications
 - **Simple Auth**: Single password authentication
 - **Clean UI**: Interface built with Material-UI
 
@@ -74,6 +76,21 @@ A simple web-based phone system built with Node.js, React, and Twilio APIs.
    ```
 
 3. **Open**: http://localhost:3000
+
+## Push Notifications (Optional)
+
+Set up Pushover for push notifications on incoming calls and voicemails:
+
+1. Create a free account at [Pushover.net](https://pushover.net/)
+2. Create an application to get your API token
+3. Add to your `.env` file:
+   ```env
+   PUSHOVER_USER_KEY=your_user_key_here
+   PUSHOVER_API_TOKEN=your_api_token_here
+   ```
+4. Test with: `node test-pushover.js`
+
+See [PUSHOVER_SETUP.md](PUSHOVER_SETUP.md) for detailed setup instructions.
 
 ## Usage
 

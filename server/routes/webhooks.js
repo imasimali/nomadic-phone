@@ -1,6 +1,7 @@
 import express from 'express'
 import twilio from 'twilio'
 import { asyncHandler } from '../middleware/errorHandler.js'
+import pushoverService from '../services/pushoverService.js'
 import config from '../config.js'
 
 const router = express.Router()
@@ -28,7 +29,7 @@ router.post(
   '/voice/incoming',
   validateTwilioRequest,
   asyncHandler(async (req, res) => {
-    const { From, To } = req.body
+    const { From, To, CallSid } = req.body
 
     // Check if this is our configured Twilio number
     if (To !== config.TWILIO_PHONE_NUMBER) {
@@ -37,39 +38,35 @@ router.post(
       return res.type('text/xml').send(twiml.toString())
     }
 
-    // Use default settings since we don't have a database
-    // Get action from configuration, default to 'recording'
-    const action = config.INCOMING_CALL_ACTION
+    // Send push notification for incoming call
+    try {
+      await pushoverService.sendIncomingCallNotification(From, CallSid)
+    } catch (error) {
+      console.error('Failed to send incoming call notification:', error)
+      // Don't fail the call if notification fails
+    }
+
     const twiml = new twilio.twiml.VoiceResponse()
 
-    switch (action) {
-      case 'client':
-        // Forward to browser client
-        const dial = twiml.dial({ callerId: To })
-        dial.client('nomadic_client')
-        break
-
-      case 'redirect':
-        // Forward to another number (would need to be configured in env)
-        if (config.REDIRECT_NUMBER) {
-          twiml.dial(config.REDIRECT_NUMBER)
-        } else {
-          twiml.say('No redirect number configured. Going to voicemail.')
-          twiml.say(config.VOICE_MESSAGE)
-          twiml.record({
-            maxLength: 300,
-            recordingStatusCallback: `${config.WEBHOOK_BASE_URL}/webhooks/voice/recording`,
-          })
-        }
-        break
-
-      default: // 'recording'
-        twiml.say(config.VOICE_MESSAGE)
-        twiml.record({
-          maxLength: 300,
-          recordingStatusCallback: `${config.WEBHOOK_BASE_URL}/webhooks/voice/recording`,
-        })
-        break
+    // Check if we should redirect to another number
+    if (config.REDIRECT_NUMBER) {
+      console.log(`Redirecting call to ${config.REDIRECT_NUMBER}`)
+      const dial = twiml.dial({
+        timeout: 30, // Ring for 30 seconds before going to voicemail
+        action: `${config.WEBHOOK_BASE_URL}/webhooks/voice/call-timeout`,
+        method: 'POST'
+      })
+      dial.number(config.REDIRECT_NUMBER)
+    } else {
+      // Forward to browser client with timeout handling
+      console.log('Forwarding call to browser client')
+      const dial = twiml.dial({
+        callerId: To,
+        timeout: 30, // Ring for 30 seconds before going to voicemail
+        action: `${config.WEBHOOK_BASE_URL}/webhooks/voice/call-timeout`,
+        method: 'POST'
+      })
+      dial.client('nomadic_client')
     }
 
     res.type('text/xml').send(twiml.toString())
@@ -96,6 +93,34 @@ router.post(
   }),
 )
 
+// Handle call timeout - when client or redirect number doesn't answer
+router.post(
+  '/voice/call-timeout',
+  validateTwilioRequest,
+  asyncHandler(async (req, res) => {
+    const { DialCallStatus, DialCallDuration } = req.body
+
+    console.log(`Call timeout status: ${DialCallStatus}${DialCallDuration ? ` (duration: ${DialCallDuration}s)` : ''}`)
+
+    const twiml = new twilio.twiml.VoiceResponse()
+
+    // Check if call wasn't answered (timeout, busy, failed, canceled)
+    const unansweredStatuses = ['no-answer', 'busy', 'failed', 'canceled']
+    if (unansweredStatuses.includes(DialCallStatus)) {
+      console.log(`Call not answered (${DialCallStatus}), redirecting to voicemail`)
+
+      // Go to voicemail
+      twiml.say(config.VOICE_MESSAGE)
+      twiml.record({
+        maxLength: 300,
+        recordingStatusCallback: `${config.WEBHOOK_BASE_URL}/webhooks/voice/recording`,
+      })
+    }
+
+    res.type('text/xml').send(twiml.toString())
+  }),
+)
+
 // Handle dial status for outbound calls
 router.post(
   '/voice/dial-status',
@@ -116,11 +141,39 @@ router.post(
   '/voice/status',
   validateTwilioRequest,
   asyncHandler(async (req, res) => {
-    const { CallSid, CallStatus, CallDuration } = req.body
+    const { CallSid, CallStatus, CallDuration, From, To, Direction } = req.body
 
-    // Since we're using Twilio API directly, we don't need to store status updates
-    // The status will be fetched from Twilio when needed
     console.log(`Call ${CallSid} status updated to ${CallStatus}${CallDuration ? ` (duration: ${CallDuration}s)` : ''}`)
+
+    // Handle completed calls to determine if they were missed or went to voicemail
+    if (CallStatus === 'completed') {
+      const duration = parseInt(CallDuration) || 0
+
+      // Only process incoming calls
+      if (Direction === 'inbound' && To === config.TWILIO_PHONE_NUMBER) {
+        // If call duration is very short (< 5 seconds), it was likely missed
+        // If it's longer, it either was answered or went to voicemail
+        if (duration < 5) {
+          try {
+            await pushoverService.sendMissedCallNotification(From, CallSid)
+          } catch (error) {
+            console.error('Failed to send missed call notification:', error)
+          }
+        }
+        // Note: Voicemail notifications are handled in the recording callback
+      }
+    }
+
+    // Handle failed/canceled calls (also considered missed)
+    if (['failed', 'canceled', 'busy', 'no-answer'].includes(CallStatus)) {
+      if (Direction === 'inbound' && To === config.TWILIO_PHONE_NUMBER) {
+        try {
+          await pushoverService.sendMissedCallNotification(From, CallSid)
+        } catch (error) {
+          console.error('Failed to send missed call notification:', error)
+        }
+      }
+    }
 
     res.status(200).send('OK')
   }),
@@ -134,6 +187,28 @@ router.post(
     const { CallSid, RecordingUrl, RecordingSid, RecordingDuration } = req.body
 
     console.log(`Recording available for call ${CallSid}: ${RecordingUrl} (${RecordingDuration}s)`)
+
+    // Send voicemail notification if recording has content
+    if (RecordingDuration && parseInt(RecordingDuration) > 0) {
+      try {
+        // We need to get the call details to find the caller's number
+        // For now, we'll use a generic notification since we don't have the From number here
+        // In a production system, you might want to store call context or fetch it from Twilio
+        await pushoverService.sendNotification({
+          title: '🎵 New Voicemail',
+          message: `New voicemail recorded (${RecordingDuration}s)`,
+          priority: '1',
+          sound: 'magic',
+          url: `${config.APP_URL}/calls`,
+          urlTitle: 'Listen to Voicemail'
+        })
+      } catch (error) {
+        console.error('Failed to send voicemail notification:', error)
+        // Don't fail the webhook if notification fails
+      }
+    } else {
+      console.log('No voicemail content recorded (duration: 0s)')
+    }
 
     res.status(200).send('OK')
   }),
