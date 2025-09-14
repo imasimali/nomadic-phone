@@ -1,6 +1,7 @@
-const express = require('express')
-const twilio = require('twilio')
-const { asyncHandler } = require('../middleware/errorHandler')
+import express from 'express'
+import twilio from 'twilio'
+import { asyncHandler } from '../middleware/errorHandler.js'
+import config from '../config.js'
 
 const router = express.Router()
 
@@ -9,8 +10,8 @@ const validateTwilioRequest = (req, res, next) => {
   const twilioSignature = req.headers['x-twilio-signature']
   const url = `${req.protocol}://${req.get('host')}${req.originalUrl}`
 
-  if (process.env.NODE_ENV === 'production') {
-    const isValid = twilio.validateRequest(process.env.TWILIO_AUTH_TOKEN, twilioSignature, url, req.body)
+  if (config.NODE_ENV === 'production') {
+    const isValid = twilio.validateRequest(config.TWILIO_AUTH_TOKEN, twilioSignature, url, req.body)
 
     if (!isValid) {
       return res.status(403).json({ error: 'Invalid Twilio signature' })
@@ -30,15 +31,15 @@ router.post(
     const { From, To } = req.body
 
     // Check if this is our configured Twilio number
-    if (To !== process.env.TWILIO_PHONE_NUMBER) {
+    if (To !== config.TWILIO_PHONE_NUMBER) {
       const twiml = new twilio.twiml.VoiceResponse()
       twiml.say('This number is not configured. Goodbye.')
       return res.type('text/xml').send(twiml.toString())
     }
 
     // Use default settings since we don't have a database
-    // Get action from environment variable, default to 'recording'
-    const action = process.env.INCOMING_CALL_ACTION || 'recording'
+    // Get action from configuration, default to 'recording'
+    const action = config.INCOMING_CALL_ACTION
     const twiml = new twilio.twiml.VoiceResponse()
 
     switch (action) {
@@ -50,23 +51,23 @@ router.post(
 
       case 'redirect':
         // Forward to another number (would need to be configured in env)
-        if (process.env.REDIRECT_NUMBER) {
-          twiml.dial(process.env.REDIRECT_NUMBER)
+        if (config.REDIRECT_NUMBER) {
+          twiml.dial(config.REDIRECT_NUMBER)
         } else {
           twiml.say('No redirect number configured. Going to voicemail.')
-          twiml.say(process.env.VOICE_MESSAGE || 'Please leave a message after the beep.')
+          twiml.say(config.VOICE_MESSAGE)
           twiml.record({
             maxLength: 300,
-            recordingStatusCallback: `${process.env.WEBHOOK_BASE_URL}/webhooks/voice/recording`,
+            recordingStatusCallback: `${config.WEBHOOK_BASE_URL}/webhooks/voice/recording`,
           })
         }
         break
 
       default: // 'recording'
-        twiml.say(process.env.VOICE_MESSAGE || 'Please leave a message after the beep.')
+        twiml.say(config.VOICE_MESSAGE)
         twiml.record({
           maxLength: 300,
-          recordingStatusCallback: `${process.env.WEBHOOK_BASE_URL}/webhooks/voice/recording`,
+          recordingStatusCallback: `${config.WEBHOOK_BASE_URL}/webhooks/voice/recording`,
         })
         break
     }
@@ -83,7 +84,7 @@ router.post(
     const { To } = req.body
 
     const twiml = new twilio.twiml.VoiceResponse()
-    const dial = twiml.dial({ callerId: process.env.TWILIO_PHONE_NUMBER })
+    const dial = twiml.dial({ callerId: config.TWILIO_PHONE_NUMBER })
     dial.number(To)
 
     res.type('text/xml').send(twiml.toString())
@@ -128,7 +129,7 @@ router.post(
     const { MessageSid, From, To, Body, NumMedia } = req.body
 
     // Check if this is our configured Twilio number
-    if (To !== process.env.TWILIO_PHONE_NUMBER) {
+    if (To !== config.TWILIO_PHONE_NUMBER) {
       return res.status(200).send('OK')
     }
 
@@ -165,4 +166,4 @@ router.post(
   }),
 )
 
-module.exports = router
+export default router

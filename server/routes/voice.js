@@ -1,10 +1,10 @@
-const express = require('express')
-const { body, query, validationResult } = require('express-validator')
-const twilio = require('twilio')
-const axios = require('axios')
-const twilioService = require('../services/twilioService')
-const apiKeyService = require('../services/apiKeyService')
-const { asyncHandler, AppError } = require('../middleware/errorHandler')
+import express from 'express'
+import { body, query, validationResult } from 'express-validator'
+import twilio from 'twilio'
+import axios from 'axios'
+import twilioService from '../services/twilioService.js'
+import apiKeyService from '../services/apiKeyService.js'
+import { asyncHandler, AppError } from '../middleware/errorHandler.js'
 
 const router = express.Router()
 
@@ -62,7 +62,7 @@ router.post('/twiml', (req, res) => {
   } else {
     // For incoming calls or default behavior
     twiml.say('Hello! This is your Nomadic Phone. Please hold while we connect your call.')
-    twiml.dial(req.body.From || '+1234567890') // Fallback number
+    twiml.dial(req.body.From || process.env.TWILIO_PHONE_NUMBER) // Fallback number
   }
 
   res.type('text/xml')
@@ -313,4 +313,4 @@ router.get(
   }),
 )
 
-module.exports = router
+export default router

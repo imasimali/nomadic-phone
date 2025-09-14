@@ -1,7 +1,8 @@
-const express = require('express')
-const { body, validationResult } = require('express-validator')
-const { generateAccessToken, generateRefreshToken, verifyRefreshToken, authenticateToken } = require('../middleware/auth')
-const { asyncHandler, AppError } = require('../middleware/errorHandler')
+import express from 'express'
+import { body, validationResult } from 'express-validator'
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken, authenticateToken } from '../middleware/auth.js'
+import { asyncHandler, AppError } from '../middleware/errorHandler.js'
+import config from '../config.js'
 
 const router = express.Router()
 
@@ -23,8 +24,8 @@ router.post(
 
     const { password } = req.body
 
-    // Check password against environment variable
-    const appPassword = process.env.APP_PASSWORD
+    // Check password against configuration
+    const appPassword = config.APP_PASSWORD
     if (!appPassword) {
       throw new AppError('Application not configured', 500, 'APP_NOT_CONFIGURED')
     }
@@ -110,4 +111,4 @@ router.post(
   }),
 )
 
-module.exports = router
+export default router

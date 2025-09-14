@@ -77,8 +77,4 @@ const asyncHandler = (fn) => {
   }
 }
 
-module.exports = {
-  errorHandler,
-  AppError,
-  asyncHandler,
-}
+export { errorHandler, AppError, asyncHandler }

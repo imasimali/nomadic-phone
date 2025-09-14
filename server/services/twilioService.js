@@ -1,9 +1,17 @@
-const twilio = require('twilio')
+import twilio from 'twilio'
+import config from '../config.js'
 
 class TwilioService {
   constructor() {
-    this.client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-    this.phoneNumber = process.env.TWILIO_PHONE_NUMBER
+    if (!config.TWILIO_ACCOUNT_SID || !config.TWILIO_AUTH_TOKEN) {
+      console.warn('Twilio credentials not found in configuration')
+      this.client = null
+      this.phoneNumber = null
+      return
+    }
+
+    this.client = twilio(config.TWILIO_ACCOUNT_SID, config.TWILIO_AUTH_TOKEN)
+    this.phoneNumber = config.TWILIO_PHONE_NUMBER
   }
 
   // Call-related methods
@@ -344,4 +352,4 @@ class TwilioService {
 // Create singleton instance
 const twilioService = new TwilioService()
 
-module.exports = twilioService
+export default twilioService

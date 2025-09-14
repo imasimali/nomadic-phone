@@ -1,4 +1,5 @@
-const jwt = require('jsonwebtoken')
+import jwt from 'jsonwebtoken'
+import config from '../config.js'
 
 const authenticateToken = async (req, res, next) => {
   try {
@@ -12,7 +13,7 @@ const authenticateToken = async (req, res, next) => {
       })
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const decoded = jwt.verify(token, config.JWT_SECRET)
 
     // Simple check - just verify the token is valid and contains our app identifier
     if (!decoded.app || decoded.app !== 'nomadic-phone') {
@@ -59,7 +60,7 @@ const generateAccessToken = () => {
       app: 'nomadic-phone',
       username: 'admin',
     },
-    process.env.JWT_SECRET,
+    config.JWT_SECRET,
     {
       expiresIn: '24h',
       issuer: 'nomadic-phone',
@@ -74,7 +75,7 @@ const generateRefreshToken = () => {
       app: 'nomadic-phone',
       type: 'refresh',
     },
-    process.env.JWT_SECRET,
+    config.JWT_SECRET,
     {
       expiresIn: '7d',
       issuer: 'nomadic-phone',
@@ -85,7 +86,7 @@ const generateRefreshToken = () => {
 
 const verifyRefreshToken = (token) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const decoded = jwt.verify(token, config.JWT_SECRET)
     if (decoded.type !== 'refresh' || decoded.app !== 'nomadic-phone') {
       throw new Error('Invalid token type')
     }
@@ -95,9 +96,4 @@ const verifyRefreshToken = (token) => {
   }
 }
 
-module.exports = {
-  authenticateToken,
-  generateAccessToken,
-  generateRefreshToken,
-  verifyRefreshToken,
-}
+export { authenticateToken, generateAccessToken, generateRefreshToken, verifyRefreshToken }

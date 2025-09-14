@@ -1,13 +1,9 @@
-const express = require('express')
-const { body, query, validationResult } = require('express-validator')
-const twilio = require('twilio')
-const twilioService = require('../services/twilioService')
-const { asyncHandler, AppError } = require('../middleware/errorHandler')
+import express from 'express'
+import { body, query, validationResult } from 'express-validator'
+import twilioService from '../services/twilioService.js'
+import { asyncHandler, AppError } from '../middleware/errorHandler.js'
 
 const router = express.Router()
-
-// Initialize Twilio client using Account SID and Auth Token
-const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
 
 // Send SMS
 router.post(
@@ -146,4 +142,4 @@ router.get(
   }),
 )
 
-module.exports = router
+export default router

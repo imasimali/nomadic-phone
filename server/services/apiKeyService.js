@@ -1,16 +1,27 @@
-const twilio = require('twilio')
-const fs = require('fs')
-const path = require('path')
+import twilio from 'twilio'
+import fs from 'fs'
+import path from 'path'
+import config from '../config.js'
 
 class ApiKeyService {
   constructor() {
+    if (!config.TWILIO_ACCOUNT_SID || !config.TWILIO_AUTH_TOKEN) {
+      console.warn('Twilio credentials not found in configuration')
+      this.client = null
+      this.cachedApiKey = null
+      this.API_KEY_NAME = 'Nomadic-Phone-App'
+      this.STORED_API_KEY_SID = null
+      this.STORED_API_SECRET = null
+      return
+    }
+
     // Use Account SID and Auth Token to manage API keys
-    this.client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+    this.client = twilio(config.TWILIO_ACCOUNT_SID, config.TWILIO_AUTH_TOKEN)
     this.cachedApiKey = null
     this.API_KEY_NAME = 'Nomadic-Phone-App'
     // Store API key data in environment variables for persistence
-    this.STORED_API_KEY_SID = process.env.NOMADIC_API_KEY_SID
-    this.STORED_API_SECRET = process.env.NOMADIC_API_SECRET
+    this.STORED_API_KEY_SID = config.NOMADIC_API_KEY_SID
+    this.STORED_API_SECRET = config.NOMADIC_API_SECRET
   }
 
   /**
@@ -192,4 +203,4 @@ class ApiKeyService {
 // Create singleton instance
 const apiKeyService = new ApiKeyService()
 
-module.exports = apiKeyService
+export default apiKeyService
