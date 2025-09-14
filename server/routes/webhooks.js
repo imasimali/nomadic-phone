@@ -24,71 +24,66 @@ const validateTwilioRequest = (req, res, next) => {
 
 // Voice webhook handlers
 
-// Handle incoming calls
+// Unified voice webhook - handles both incoming and outbound calls
 router.post(
-  '/voice/incoming',
-  validateTwilioRequest,
-  asyncHandler(async (req, res) => {
-    const { From, To, CallSid } = req.body
-
-    // Check if this is our configured Twilio number
-    if (To !== config.TWILIO_PHONE_NUMBER) {
-      const twiml = new twilio.twiml.VoiceResponse()
-      twiml.say('This number is not configured. Goodbye.')
-      return res.type('text/xml').send(twiml.toString())
-    }
-
-    // Send push notification for incoming call
-    try {
-      await pushoverService.sendIncomingCallNotification(From, CallSid)
-    } catch (error) {
-      console.error('Failed to send incoming call notification:', error)
-      // Don't fail the call if notification fails
-    }
-
-    const twiml = new twilio.twiml.VoiceResponse()
-
-    // Check if we should redirect to another number
-    if (config.REDIRECT_NUMBER) {
-      console.log(`Redirecting call to ${config.REDIRECT_NUMBER}`)
-      const dial = twiml.dial({
-        timeout: 30, // Ring for 30 seconds before going to voicemail
-        action: `${config.WEBHOOK_BASE_URL}/webhooks/voice/call-timeout`,
-        method: 'POST'
-      })
-      dial.number(config.REDIRECT_NUMBER)
-    } else {
-      // Forward to browser client with timeout handling
-      console.log('Forwarding call to browser client')
-      const dial = twiml.dial({
-        callerId: To,
-        timeout: 30, // Ring for 30 seconds before going to voicemail
-        action: `${config.WEBHOOK_BASE_URL}/webhooks/voice/call-timeout`,
-        method: 'POST'
-      })
-      dial.client('nomadic_client')
-    }
-
-    res.type('text/xml').send(twiml.toString())
-  }),
-)
-
-// Handle outbound calls from Voice SDK
-router.post(
-  '/voice/outbound',
+  '/voice/twiml-app',
   validateTwilioRequest,
   asyncHandler(async (req, res) => {
     const { To, From, CallSid } = req.body
     const twiml = new twilio.twiml.VoiceResponse()
 
-    // For calls initiated from the Voice SDK, dial the target number
-    const dial = twiml.dial({
-      callerId: config.TWILIO_PHONE_NUMBER,
-      // Set up event callbacks for call progress
-      action: `${config.WEBHOOK_BASE_URL}/webhooks/voice/dial-status`,
-      method: 'POST'
-    })
-    dial.number(To)
+    console.log(`📞 Voice webhook called - From: ${From}, To: ${To}, CallSid: ${CallSid}`)
+
+    // Determine if this is an incoming call or outbound call
+    // Incoming calls: To = our Twilio number, From = external caller
+    // Outbound calls: From = our client identity, To = external number
+
+    if (To === config.TWILIO_PHONE_NUMBER) {
+      // This is an INCOMING call to our Twilio number
+      console.log('🔄 Handling incoming call via TwiML App')
+
+      // Send push notification for incoming call
+      try {
+        await pushoverService.sendIncomingCallNotification(From, CallSid)
+      } catch (error) {
+        console.error('Failed to send incoming call notification:', error)
+        // Don't fail the call if notification fails
+      }
+
+      // Check if we should redirect to another number
+      if (config.REDIRECT_NUMBER) {
+        console.log(`Redirecting call to ${config.REDIRECT_NUMBER}`)
+        const dial = twiml.dial({
+          timeout: 30, // Ring for 30 seconds before going to voicemail
+          action: `${config.WEBHOOK_BASE_URL}/webhooks/voice/call-timeout`,
+          method: 'POST'
+        })
+        dial.number(config.REDIRECT_NUMBER)
+      } else {
+        // Forward to browser client with timeout handling
+        console.log('Forwarding call to browser client')
+        const dial = twiml.dial({
+          callerId: To,
+          timeout: 30, // Ring for 30 seconds before going to voicemail
+          action: `${config.WEBHOOK_BASE_URL}/webhooks/voice/call-timeout`,
+          method: 'POST'
+        })
+        dial.client('nomadic_client')
+      }
+    } else {
+      // This is an OUTBOUND call from the Voice SDK
+      console.log('📱 Handling outbound call from browser client')
+
+      // For calls initiated from the Voice SDK, dial the target number
+      const dial = twiml.dial({
+        callerId: config.TWILIO_PHONE_NUMBER,
+        // Set up event callbacks for call progress
+        action: `${config.WEBHOOK_BASE_URL}/webhooks/voice/dial-status`,
+        method: 'POST'
+      })
+      dial.number(To)
+    }
+
     res.type('text/xml').send(twiml.toString())
   }),
 )
@@ -199,7 +194,7 @@ router.post(
           message: `New voicemail recorded (${RecordingDuration}s)`,
           priority: '1',
           sound: 'magic',
-          url: `${config.APP_URL}/calls`,
+          url: `${config.APP_URL}/recordings`,
           urlTitle: 'Listen to Voicemail'
         })
       } catch (error) {

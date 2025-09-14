@@ -104,7 +104,7 @@ class PushoverService {
       message: `Call from ${formattedNumber}`,
       priority: '1', // High priority for incoming calls
       sound: 'incoming', // Use incoming call sound
-      url: `${config.APP_URL}/calls`,
+      url: `${config.APP_URL}/voice`,
       urlTitle: 'View Call History'
     })
   }
@@ -132,7 +132,7 @@ class PushoverService {
       message,
       priority: '1', // High priority for voicemails
       sound: 'magic', // Use a distinctive sound for voicemails
-      url: `${config.APP_URL}/calls`,
+      url: `${config.APP_URL}/voice`,
       urlTitle: 'Listen to Voicemail'
     })
   }
@@ -151,7 +151,7 @@ class PushoverService {
       message: `Missed call from ${formattedNumber}`,
       priority: '0', // Normal priority for missed calls
       sound: 'intermission',
-      url: `${config.APP_URL}/calls`,
+      url: `${config.APP_URL}/voice`,
       urlTitle: 'View Call History'
     })
   }

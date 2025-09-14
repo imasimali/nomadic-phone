@@ -123,7 +123,7 @@ const Voice: React.FC = () => {
       <Dialog open={!!incomingCall} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ textAlign: 'center' }}>
           <Phone sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
-          <Typography variant="h5">Incoming Call</Typography>
+          <Typography variant="h6" component="span">Incoming Call</Typography>
         </DialogTitle>
         <DialogContent sx={{ textAlign: 'center' }}>
           <Typography variant="h6">{incomingCall && formatPhoneNumber(incomingCall.parameters.From || '')}</Typography>

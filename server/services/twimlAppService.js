@@ -34,9 +34,9 @@ class TwiMLAppService {
         // Update the app with current webhook URLs
         app = await this.client.applications(app.sid).update({
           friendlyName: this.APP_NAME,
-          voiceUrl: `${config.WEBHOOK_BASE_URL}/webhooks/voice/outbound`,
+          voiceUrl: `${config.WEBHOOK_BASE_URL}/webhooks/voice/twiml-app`,
           voiceMethod: 'POST',
-          voiceFallbackUrl: `${config.WEBHOOK_BASE_URL}/webhooks/voice/outbound`,
+          voiceFallbackUrl: `${config.WEBHOOK_BASE_URL}/webhooks/voice/twiml-app`,
           voiceFallbackMethod: 'POST',
           statusCallback: `${config.WEBHOOK_BASE_URL}/webhooks/voice/status`,
           statusCallbackMethod: 'POST'
@@ -49,9 +49,9 @@ class TwiMLAppService {
         
         app = await this.client.applications.create({
           friendlyName: this.APP_NAME,
-          voiceUrl: `${config.WEBHOOK_BASE_URL}/webhooks/voice/outbound`,
+          voiceUrl: `${config.WEBHOOK_BASE_URL}/webhooks/voice/twiml-app`,
           voiceMethod: 'POST',
-          voiceFallbackUrl: `${config.WEBHOOK_BASE_URL}/webhooks/voice/outbound`,
+          voiceFallbackUrl: `${config.WEBHOOK_BASE_URL}/webhooks/voice/twiml-app`,
           voiceFallbackMethod: 'POST',
           statusCallback: `${config.WEBHOOK_BASE_URL}/webhooks/voice/status`,
           statusCallbackMethod: 'POST'
