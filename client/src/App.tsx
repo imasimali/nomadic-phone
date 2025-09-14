@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { CssBaseline, Box } from '@mui/material'
 import { Provider as JotaiProvider } from 'jotai'
+import { HelmetProvider } from 'react-helmet-async'
 import { useAuth, useAuthInit } from './contexts/AuthContext'
 import { useVoiceInit } from './contexts/VoiceContext'
 import Login from './components/Auth/Login'
@@ -135,23 +136,25 @@ const AppContent: React.FC = () => {
 
 function App() {
   return (
-    <JotaiProvider>
-      <Router>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <Box
-            sx={{
-              minHeight: '100vh',
-              backgroundColor: 'background.default',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            <AppContent />
-          </Box>
-        </ThemeProvider>
-      </Router>
-    </JotaiProvider>
+    <HelmetProvider>
+      <JotaiProvider>
+        <Router>
+          <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <Box
+              sx={{
+                minHeight: '100vh',
+                backgroundColor: 'background.default',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <AppContent />
+            </Box>
+          </ThemeProvider>
+        </Router>
+      </JotaiProvider>
+    </HelmetProvider>
   )
 }
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Box, Typography, TextField, Button, Alert, Paper, IconButton, AppBar, Toolbar } from '@mui/material'
 import { Send, ArrowBack, Refresh, Check, CheckCircle, Error, Schedule, HourglassEmpty } from '@mui/icons-material'
 import { smsAPI, SMS } from '../../services/api'
+import { usePageTitle } from '../../hooks/usePageTitle'
 
 interface ConversationProps {
   phoneNumber: string
@@ -9,6 +10,16 @@ interface ConversationProps {
 }
 
 const Conversation: React.FC<ConversationProps> = ({ phoneNumber, onBack }) => {
+  const formatPhoneNumber = (number: string) => {
+    const cleaned = number.replace(/\D/g, '')
+    if (cleaned.length === 11 && cleaned.startsWith('1')) {
+      return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`
+    }
+    return number
+  }
+
+  usePageTitle(`Chat with ${formatPhoneNumber(phoneNumber)}`)
+
   const [messages, setMessages] = useState<SMS[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -71,14 +82,6 @@ const Conversation: React.FC<ConversationProps> = ({ phoneNumber, onBack }) => {
     } finally {
       setSending(false)
     }
-  }
-
-  const formatPhoneNumber = (number: string) => {
-    const cleaned = number.replace(/\D/g, '')
-    if (cleaned.length === 11 && cleaned.startsWith('1')) {
-      return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`
-    }
-    return number
   }
 
   const formatTime = (dateString: string) => {

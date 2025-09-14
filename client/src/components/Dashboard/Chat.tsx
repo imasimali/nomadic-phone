@@ -4,6 +4,7 @@ import { Message, Refresh, Send } from '@mui/icons-material'
 import { smsAPI, SMS } from '../../services/api'
 import Conversation from './Conversation'
 import SMSModal from './SMSModal'
+import { usePageTitle } from '../../hooks/usePageTitle'
 
 interface ChatConversation {
   phoneNumber: string
@@ -14,6 +15,8 @@ interface ChatConversation {
 }
 
 const Chat: React.FC = () => {
+  usePageTitle('Chats')
+
   const [conversations, setConversations] = useState<ChatConversation[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')

@@ -3,8 +3,11 @@ import { Box, Card, CardContent, Typography, TextField, Button, Alert, Dialog, D
 import { Phone, CallEnd, Mic, MicOff } from '@mui/icons-material'
 import { useVoice } from '../../contexts/VoiceContext'
 import CallHistory from './CallHistory'
+import { usePageTitle } from '../../hooks/usePageTitle'
 
 const Voice: React.FC = () => {
+  usePageTitle('Voice')
+
   const { isReady, isConnecting, activeCall, incomingCall, makeCall, answerCall, rejectCall, hangupCall, muteCall, unmuteCall, isMuted, error } = useVoice()
 
   const [phoneNumber, setPhoneNumber] = useState('')

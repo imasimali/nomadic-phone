@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { Box, Card, CardContent, Typography, List, ListItem, ListItemIcon, ListItemText, Alert, Button, IconButton, CircularProgress } from '@mui/material'
 import { PlayArrow, Download, Refresh, CallMade, CallReceived, RecordVoiceOver, Pause } from '@mui/icons-material'
 import { voiceAPI, Recording } from '../../services/api'
+import { usePageTitle } from '../../hooks/usePageTitle'
 
 const Recordings: React.FC = () => {
+  usePageTitle('Recordings')
+
   const [recordings, setRecordings] = useState<Recording[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')

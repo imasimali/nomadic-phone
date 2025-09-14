@@ -105,7 +105,3 @@ npm start
 ```
 
 Set `NODE_ENV=production` and update webhook URLs to your domain.
-
-## License
-
-MIT

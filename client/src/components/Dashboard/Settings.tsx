@@ -22,8 +22,11 @@ import {
 import { Save, Refresh, Phone, Voicemail, Info, CheckCircle, Warning } from '@mui/icons-material'
 import { voiceAPI, VoiceSettings } from '../../services/api'
 import LoadingScreen from '../Common/LoadingScreen'
+import { usePageTitle } from '../../hooks/usePageTitle'
 
 const Settings: React.FC = () => {
+  usePageTitle('Settings')
+
   const [settings, setSettings] = useState<VoiceSettings>({
     incoming_call_action: 'recording',
     redirect_number: '',

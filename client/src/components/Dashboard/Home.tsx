@@ -5,12 +5,15 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useVoice } from '../../contexts/VoiceContext'
 import { voiceAPI, smsAPI, Call, SMS } from '../../services/api'
 import LoadingScreen from '../Common/LoadingScreen'
+import { usePageTitle } from '../../hooks/usePageTitle'
 
 interface HomeProps {
   onNavigateToTab?: (tab: string) => void
 }
 
 const Home: React.FC<HomeProps> = ({ onNavigateToTab }) => {
+  usePageTitle('Dashboard')
+
   const { user } = useAuth()
   const { isReady } = useVoice()
   const [stats, setStats] = useState({

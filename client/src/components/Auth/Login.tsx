@@ -3,8 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { Box, Card, CardContent, TextField, Button, Typography, Alert, Container, InputAdornment, IconButton } from '@mui/material'
 import { Visibility, VisibilityOff, Phone } from '@mui/icons-material'
 import { useAuth } from '../../contexts/AuthContext'
+import { usePageTitle } from '../../hooks/usePageTitle'
 
 const Login: React.FC = () => {
+  usePageTitle('Login')
+
   const navigate = useNavigate()
   const { login } = useAuth()
   const [formData, setFormData] = useState({
