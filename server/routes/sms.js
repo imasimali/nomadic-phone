@@ -46,7 +46,7 @@ router.get(
   '/messages',
   [
     query('page').optional().isInt({ min: 1 }).toInt(),
-    query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
+    query('limit').optional().isInt({ min: 1, max: 1000 }).toInt(),
     query('direction').optional().isIn(['inbound', 'outbound']),
     query('status').optional().isIn(['accepted', 'queued', 'sending', 'sent', 'failed', 'delivered', 'undelivered', 'receiving', 'received']),
   ],
@@ -99,7 +99,7 @@ router.get(
 // Get conversation with a specific number
 router.get(
   '/conversations/:phoneNumber',
-  [query('page').optional().isInt({ min: 1 }).toInt(), query('limit').optional().isInt({ min: 1, max: 100 }).toInt()],
+  [query('page').optional().isInt({ min: 1 }).toInt(), query('limit').optional().isInt({ min: 1, max: 1000 }).toInt()],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {

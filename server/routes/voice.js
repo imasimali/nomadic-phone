@@ -98,7 +98,7 @@ router.get(
   '/calls',
   [
     query('page').optional().isInt({ min: 1 }).toInt(),
-    query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
+    query('limit').optional().isInt({ min: 1, max: 10000 }).toInt(),
     query('direction').optional().isIn(['inbound', 'outbound']),
     query('status').optional().isIn(['queued', 'ringing', 'in-progress', 'completed', 'busy', 'failed', 'no-answer', 'canceled']),
   ],
@@ -135,7 +135,7 @@ router.get(
 // Get recordings
 router.get(
   '/recordings',
-  [query('page').optional().isInt({ min: 1 }).toInt(), query('limit').optional().isInt({ min: 1, max: 100 }).toInt()],
+  [query('page').optional().isInt({ min: 1 }).toInt(), query('limit').optional().isInt({ min: 1, max: 10000 }).toInt()],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {

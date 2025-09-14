@@ -31,8 +31,8 @@ const Home: React.FC<HomeProps> = ({ onNavigateToTab }) => {
       const [callsResponse, smsResponse, totalCallsResponse, totalSMSResponse] = await Promise.all([
         voiceAPI.getCalls({ limit: 5 }), // For recent items
         smsAPI.getMessages({ limit: 5 }), // For recent items
-        voiceAPI.getCalls({ limit: 100 }), // For total count estimate
-        smsAPI.getMessages({ limit: 100 }), // For total count estimate
+        voiceAPI.getCalls({ limit: 500 }), // For total count estimate
+        smsAPI.getMessages({ limit: 500 }), // For total count estimate
       ])
 
       setStats({

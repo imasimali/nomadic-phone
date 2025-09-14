@@ -2,12 +2,12 @@ import React, { useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { CssBaseline, Box } from '@mui/material'
-import { AuthProvider, useAuth } from './contexts/AuthContext'
-import { VoiceProvider } from './contexts/VoiceContext'
+import { Provider as JotaiProvider } from 'jotai'
+import { useAuth, useAuthInit } from './contexts/AuthContext'
+import { useVoiceInit } from './contexts/VoiceContext'
 import Login from './components/Auth/Login'
 import MobileApp from './components/MobileApp'
 import LoadingScreen from './components/Common/LoadingScreen'
-import { StatusBarManager } from './utils/statusBar'
 
 // Simple mobile-first theme
 const theme = createTheme({
@@ -85,55 +85,73 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <>{children}</>
 }
 
+// Initialization component to handle auth and voice setup
+const AppInitializer: React.FC = () => {
+  const checkAuth = useAuthInit()
+  const { isAuthenticated, initializeDevice, cleanupDevice } = useVoiceInit()
+
+  useEffect(() => {
+    // Initialize auth on app start
+    checkAuth()
+  }, [checkAuth])
+
+  useEffect(() => {
+    // Handle voice initialization based on auth state
+    if (isAuthenticated) {
+      initializeDevice()
+    } else {
+      cleanupDevice()
+    }
+  }, [isAuthenticated, initializeDevice, cleanupDevice])
+
+  return null
+}
+
 const AppContent: React.FC = () => {
   return (
-    <Routes>
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <Login />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/*"
-        element={
-          <ProtectedRoute>
-            <MobileApp />
-          </ProtectedRoute>
-        }
-      />
-    </Routes>
+    <>
+      <AppInitializer />
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <MobileApp />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </>
   )
 }
 
 function App() {
-  // Initialize StatusBar when app starts
-  useEffect(() => {
-    StatusBarManager.initialize()
-  }, [])
-
   return (
-    <Router>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <AuthProvider>
-          <VoiceProvider>
-            <Box
-              sx={{
-                minHeight: '100vh',
-                backgroundColor: 'background.default',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
-              <AppContent />
-            </Box>
-          </VoiceProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </Router>
+    <JotaiProvider>
+      <Router>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <Box
+            sx={{
+              minHeight: '100vh',
+              backgroundColor: 'background.default',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <AppContent />
+          </Box>
+        </ThemeProvider>
+      </Router>
+    </JotaiProvider>
   )
 }
 
