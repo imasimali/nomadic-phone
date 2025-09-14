@@ -43,7 +43,7 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
   const [incomingCall, setIncomingCall] = useState<TwilioCall | null>(null)
   const [isMuted, setIsMuted] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [currentCallSid, setCurrentCallSid] = useState<string | null>(null)
+
 
   // Computed call status
   const callStatus = incomingCall ? 'incoming' : isConnecting ? 'connecting' : activeCall ? 'connected' : ''
@@ -54,7 +54,6 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
     setIncomingCall(null)
     setIsConnecting(false)
     setIsMuted(false)
-    setCurrentCallSid(null)
   }
 
   // Initialize Twilio Device when authenticated
@@ -94,7 +93,7 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
 
       // Create Twilio Device
       const newDevice = new Device(token, {
-        logLevel: 0,
+        logLevel: 'ERROR',
         allowIncomingWhileBusy: true,
       })
 
@@ -142,28 +141,44 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
   }
 
   const setupCallListeners = (call: TwilioCall) => {
+    // Handle when call is accepted/answered (works for both incoming and outgoing)
     call.on('accept', () => {
       setActiveCall(call)
       setIncomingCall(null)
       setIsConnecting(false)
     })
 
+    // Handle call disconnection
     call.on('disconnect', () => {
       resetCallState()
     })
 
+    // Handle call cancellation (caller hangs up before answer)
     call.on('cancel', () => {
       setIncomingCall(null)
+      setIsConnecting(false)
     })
 
+    // Handle call rejection
     call.on('reject', () => {
       setIncomingCall(null)
+      setIsConnecting(false)
     })
 
+    // Handle call errors
     call.on('error', (error) => {
       setError(error.message || 'Call error')
       resetCallState()
     })
+
+    // Handle ringing state for outbound calls
+    call.on('ringing', () => {
+      // Call is ringing on the other end
+      console.log('📞 Call is ringing on the other end...')
+    })
+
+    // Add debug logging for all call events
+    console.log('🔧 Setting up call listeners for call:', call.parameters)
   }
 
   const makeCall = async (phoneNumber: string) => {
@@ -174,13 +189,27 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
     try {
       setIsConnecting(true)
       setError(null)
-      const response = await voiceAPI.makeCall(phoneNumber)
 
-      // Store the call SID for hangup functionality
-      if (response.data.callSid) {
-        setCurrentCallSid(response.data.callSid)
-      }
+      console.log('📞 Initiating outbound call to:', phoneNumber)
+
+      // Use Twilio Voice SDK to create the call connection
+      const call = await device.connect({
+        params: {
+          To: phoneNumber,
+          // The From parameter will be handled by the webhook based on Twilio configuration
+          // But we can pass it explicitly if needed
+        }
+      })
+
+      console.log('✅ Call object created, setting up listeners...')
+
+      // Set up call event listeners for the outbound call
+      setupCallListeners(call)
+
+      // The call will be in connecting state until answered
+      // When answered, the 'accept' event will fire and update the UI
     } catch (error: any) {
+      console.error('❌ Failed to make call:', error)
       setError(error?.response?.data?.message || error?.message || 'Failed to make call')
       setIsConnecting(false)
       throw error
@@ -209,16 +238,6 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
       // Reject incoming call if present
       if (incomingCall) {
         incomingCall.reject()
-      }
-
-      // Also hangup via backend API if we have a call SID
-      if (currentCallSid) {
-        try {
-          await voiceAPI.hangupCall(currentCallSid)
-        } catch (error) {
-          console.warn('Failed to hangup call via backend API:', error)
-          // Don't throw here as the Voice SDK disconnect might have worked
-        }
       }
 
       // Reset call state

@@ -90,42 +90,9 @@ class TwilioService {
     }
   }
 
-  // Make a call
-  async makeCall(to) {
-    try {
-      const call = await this.client.calls.create({
-        to,
-        from: this.phoneNumber,
-        url: `${process.env.WEBHOOK_BASE_URL}/webhooks/voice/outbound`,
-        statusCallback: `${process.env.WEBHOOK_BASE_URL}/webhooks/voice/status`,
-        statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
-        statusCallbackMethod: 'POST',
-        record: true,
-        recordingStatusCallback: `${process.env.WEBHOOK_BASE_URL}/webhooks/voice/recording`,
-      })
 
-      return {
-        callSid: call.sid,
-        status: call.status,
-        to: call.to,
-        from: call.from,
-      }
-    } catch (error) {
-      console.error('Error making call:', error)
-      throw new Error(`Failed to make call: ${error.message}`)
-    }
-  }
 
-  // Hangup a call
-  async hangupCall(callSid) {
-    try {
-      await this.client.calls(callSid).update({ status: 'completed' })
-      return { success: true }
-    } catch (error) {
-      console.error('Error hanging up call:', error)
-      throw new Error(`Failed to hangup call: ${error.message}`)
-    }
-  }
+
 
   // Get all recordings
   async getRecordings(options = {}) {

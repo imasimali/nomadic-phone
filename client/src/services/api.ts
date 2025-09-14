@@ -187,13 +187,9 @@ export const authAPI = {
 export const voiceAPI = {
   getToken: () => api.get('/voice/token'),
 
-  makeCall: (to: string) => api.post('/voice/call', { to }),
-
   getCalls: (params?: { page?: number; limit?: number; direction?: string; status?: string }) => api.get('/voice/calls', { params }),
 
   getCall: (callSid: string) => api.get(`/voice/calls/${callSid}`),
-
-  hangupCall: (callSid: string) => api.post(`/voice/calls/${callSid}/hangup`),
 
   getRecordings: (params?: { page?: number; limit?: number }) => api.get('/voice/recordings', { params }),
 

@@ -76,17 +76,37 @@ router.post(
   }),
 )
 
-// Handle outbound calls
+// Handle outbound calls from Voice SDK
 router.post(
   '/voice/outbound',
   validateTwilioRequest,
   asyncHandler(async (req, res) => {
-    const { To } = req.body
-
+    const { To, From, CallSid } = req.body
     const twiml = new twilio.twiml.VoiceResponse()
-    const dial = twiml.dial({ callerId: config.TWILIO_PHONE_NUMBER })
-    dial.number(To)
 
+    // For calls initiated from the Voice SDK, dial the target number
+    const dial = twiml.dial({
+      callerId: config.TWILIO_PHONE_NUMBER,
+      // Set up event callbacks for call progress
+      action: `${config.WEBHOOK_BASE_URL}/webhooks/voice/dial-status`,
+      method: 'POST'
+    })
+    dial.number(To)
+    res.type('text/xml').send(twiml.toString())
+  }),
+)
+
+// Handle dial status for outbound calls
+router.post(
+  '/voice/dial-status',
+  validateTwilioRequest,
+  asyncHandler(async (req, res) => {
+    const { DialCallStatus, DialCallDuration } = req.body
+
+    console.log(`Dial status: ${DialCallStatus}${DialCallDuration ? ` (duration: ${DialCallDuration}s)` : ''}`)
+
+    // Return empty TwiML to end the call flow
+    const twiml = new twilio.twiml.VoiceResponse()
     res.type('text/xml').send(twiml.toString())
   }),
 )

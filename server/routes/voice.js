@@ -4,6 +4,7 @@ import twilio from 'twilio'
 import axios from 'axios'
 import twilioService from '../services/twilioService.js'
 import apiKeyService from '../services/apiKeyService.js'
+import twimlAppService from '../services/twimlAppService.js'
 import { asyncHandler, AppError } from '../middleware/errorHandler.js'
 
 const router = express.Router()
@@ -20,6 +21,23 @@ router.get(
       })
     }
 
+    // Auto-configure TwiML Application if needed
+    let applicationSid = process.env.TWILIO_APPLICATION_SID
+    try {
+      const twimlApp = await twimlAppService.ensureTwiMLApp()
+      applicationSid = twimlApp.sid
+      console.log(`🎯 Using TwiML Application: ${applicationSid}`)
+    } catch (error) {
+      console.warn('Failed to auto-configure TwiML Application:', error.message)
+      // Continue with existing APPLICATION_SID if available
+      if (!applicationSid) {
+        return res.status(503).json({
+          error: 'TwiML Application not configured',
+          message: 'Failed to auto-configure TwiML Application and no TWILIO_APPLICATION_SID provided',
+        })
+      }
+    }
+
     const { AccessToken } = twilio.jwt
     const { VoiceGrant } = AccessToken
 
@@ -33,9 +51,9 @@ router.get(
       ttl: 3600, // 1 hour
     })
 
-    // Create voice grant
+    // Create voice grant with auto-configured Application SID
     const voiceGrant = new VoiceGrant({
-      outgoingApplicationSid: process.env.TWILIO_APPLICATION_SID,
+      outgoingApplicationSid: applicationSid,
       incomingAllow: true,
     })
 
@@ -47,44 +65,35 @@ router.get(
     res.json({
       token,
       identity: req.user.twilio_client_name,
+      applicationSid, // Include for debugging
     })
   }),
 )
 
-
-// Make an outbound call
+// Configure TwiML Application
 router.post(
-  '/call',
-  [
-    body('to')
-      .matches(/^\+[1-9]\d{1,14}$/)
-      .withMessage('Valid phone number in E.164 format required'),
-  ],
+  '/configure-app',
   asyncHandler(async (req, res) => {
-    const errors = validationResult(req)
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        error: 'Validation failed',
-        details: errors.array(),
-      })
-    }
-
-    const { to } = req.body
-
     try {
-      const result = await twilioService.makeCall(to)
+      const twimlApp = await twimlAppService.ensureTwiMLApp()
 
       res.json({
-        message: 'Call initiated successfully',
-        callSid: result.callSid,
-        status: result.status,
+        message: 'TwiML Application configured successfully',
+        application: {
+          sid: twimlApp.sid,
+          friendlyName: twimlApp.friendlyName,
+          voiceUrl: twimlApp.voiceUrl,
+          created: twimlApp.created
+        }
       })
     } catch (error) {
-      console.error('Error making call:', error)
-      throw new AppError('Failed to initiate call', 500, 'CALL_FAILED')
+      console.error('Error configuring TwiML Application:', error)
+      throw new AppError('Failed to configure TwiML Application', 500, 'TWIML_CONFIG_FAILED')
     }
   }),
 )
+
+
 
 // Get call history
 router.get(
@@ -171,25 +180,7 @@ router.get(
   }),
 )
 
-// Hangup a call
-router.post(
-  '/calls/:callSid/hangup',
-  asyncHandler(async (req, res) => {
-    const { callSid } = req.params
 
-    try {
-      await twilioService.hangupCall(callSid)
-
-      res.json({
-        message: 'Call ended successfully',
-        callSid,
-      })
-    } catch (error) {
-      console.error('Error ending call:', error)
-      throw new AppError('Failed to end call', 500, 'HANGUP_FAILED')
-    }
-  }),
-)
 
 // Get user's voice settings
 router.get(

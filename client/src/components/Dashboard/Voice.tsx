@@ -56,6 +56,11 @@ const Voice: React.FC = () => {
           <Typography variant="h6" gutterBottom>
             Voice Service: {isReady ? '✅ Ready' : '⏳ Connecting...'}
           </Typography>
+          {isConnecting && (
+            <Typography variant="body2" color="primary">
+              📞 Calling... Please wait for the other party to answer.
+            </Typography>
+          )}
         </CardContent>
       </Card>
 
