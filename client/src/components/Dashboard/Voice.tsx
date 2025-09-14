@@ -25,6 +25,14 @@ const Voice: React.FC = () => {
     }
   }
 
+  const handleHangupCall = async () => {
+    try {
+      await hangupCall()
+    } catch (error: any) {
+      // Error handled by context
+    }
+  }
+
   const formatPhoneNumber = (number: string) => {
     const cleaned = number.replace(/\D/g, '')
     if (cleaned.length === 11 && cleaned.startsWith('1')) {
@@ -72,7 +80,7 @@ const Voice: React.FC = () => {
               </Button>
             ) : (
               <Stack direction="row" spacing={2}>
-                <Button variant="contained" color="error" size="large" startIcon={<CallEnd />} onClick={hangupCall} sx={{ flex: 1, minHeight: 56 }}>
+                <Button variant="contained" color="error" size="large" startIcon={<CallEnd />} onClick={handleHangupCall} sx={{ flex: 1, minHeight: 56 }}>
                   Hang Up
                 </Button>
                 {activeCall && (

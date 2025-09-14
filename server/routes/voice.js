@@ -51,23 +51,6 @@ router.get(
   }),
 )
 
-// TwiML endpoint for handling voice calls
-router.post('/twiml', (req, res) => {
-  const VoiceResponse = require('twilio').twiml.VoiceResponse
-  const twiml = new VoiceResponse()
-
-  // For outbound calls, connect to the specified number
-  if (req.body.To) {
-    twiml.dial(req.body.To)
-  } else {
-    // For incoming calls or default behavior
-    twiml.say('Hello! This is your Nomadic Phone. Please hold while we connect your call.')
-    twiml.dial(req.body.From || process.env.TWILIO_PHONE_NUMBER) // Fallback number
-  }
-
-  res.type('text/xml')
-  res.send(twiml.toString())
-})
 
 // Make an outbound call
 router.post(

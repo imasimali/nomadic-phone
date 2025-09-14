@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Box, Grid, Card, CardContent, Typography, Button, Chip, List, ListItem, ListItemText, ListItemIcon, Divider, Alert } from '@mui/material'
-import { Phone, Message, CallMade, CallReceived, CheckCircle, Error, Warning } from '@mui/icons-material'
+import { Phone, Message, CallMade, CallReceived, CheckCircle, Warning } from '@mui/icons-material'
 import { useAuth } from '../../contexts/AuthContext'
 import { useVoice } from '../../contexts/VoiceContext'
 import { voiceAPI, smsAPI, Call, SMS } from '../../services/api'
@@ -12,7 +12,7 @@ interface HomeProps {
 
 const Home: React.FC<HomeProps> = ({ onNavigateToTab }) => {
   const { user } = useAuth()
-  const { isReady, device } = useVoice()
+  const { isReady } = useVoice()
   const [stats, setStats] = useState({
     totalCalls: 0,
     totalSMS: 0,
@@ -43,9 +43,6 @@ const Home: React.FC<HomeProps> = ({ onNavigateToTab }) => {
   }
 
   const getVoiceStatus = () => {
-    if (!device) {
-      return { status: 'Disconnected', color: 'error', icon: <Error /> }
-    }
     if (isReady) {
       return { status: 'Ready', color: 'success', icon: <CheckCircle /> }
     }

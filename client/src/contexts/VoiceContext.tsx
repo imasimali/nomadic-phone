@@ -5,7 +5,6 @@ import { useAuth } from './AuthContext'
 import { requestMicrophonePermission } from '../utils/permissions'
 
 interface VoiceContextType {
-  device: Device | null
   isReady: boolean
   isConnecting: boolean
   activeCall: TwilioCall | null
@@ -13,7 +12,7 @@ interface VoiceContextType {
   makeCall: (phoneNumber: string) => Promise<void>
   answerCall: () => void
   rejectCall: () => void
-  hangupCall: () => void
+  hangupCall: () => Promise<void>
   muteCall: () => void
   unmuteCall: () => void
   isMuted: boolean
@@ -43,8 +42,20 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
   const [activeCall, setActiveCall] = useState<TwilioCall | null>(null)
   const [incomingCall, setIncomingCall] = useState<TwilioCall | null>(null)
   const [isMuted, setIsMuted] = useState(false)
-  const [callStatus, setCallStatus] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [currentCallSid, setCurrentCallSid] = useState<string | null>(null)
+
+  // Computed call status
+  const callStatus = incomingCall ? 'incoming' : isConnecting ? 'connecting' : activeCall ? 'connected' : ''
+
+  // Helper function to reset call state
+  const resetCallState = () => {
+    setActiveCall(null)
+    setIncomingCall(null)
+    setIsConnecting(false)
+    setIsMuted(false)
+    setCurrentCallSid(null)
+  }
 
   // Initialize Twilio Device when authenticated
   useEffect(() => {
@@ -100,7 +111,6 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
 
       newDevice.on('incoming', (call) => {
         setIncomingCall(call)
-        setCallStatus('incoming')
         setupCallListeners(call)
       })
 
@@ -127,9 +137,7 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
       setDevice(null)
     }
     setIsReady(false)
-    setActiveCall(null)
-    setIncomingCall(null)
-    setCallStatus('')
+    resetCallState()
     setError(null)
   }
 
@@ -137,34 +145,24 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
     call.on('accept', () => {
       setActiveCall(call)
       setIncomingCall(null)
-      setCallStatus('connected')
       setIsConnecting(false)
     })
 
     call.on('disconnect', () => {
-      setActiveCall(null)
-      setIncomingCall(null)
-      setCallStatus('')
-      setIsConnecting(false)
-      setIsMuted(false)
+      resetCallState()
     })
 
     call.on('cancel', () => {
       setIncomingCall(null)
-      setCallStatus('')
     })
 
     call.on('reject', () => {
       setIncomingCall(null)
-      setCallStatus('')
     })
 
     call.on('error', (error) => {
       setError(error.message || 'Call error')
-      setActiveCall(null)
-      setIncomingCall(null)
-      setCallStatus('')
-      setIsConnecting(false)
+      resetCallState()
     })
   }
 
@@ -176,18 +174,15 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
     try {
       setIsConnecting(true)
       setError(null)
-      setCallStatus('connecting')
+      const response = await voiceAPI.makeCall(phoneNumber)
 
-      const call = await device.connect({
-        params: { To: phoneNumber },
-      })
-
-      setupCallListeners(call)
-      setActiveCall(call)
+      // Store the call SID for hangup functionality
+      if (response.data.callSid) {
+        setCurrentCallSid(response.data.callSid)
+      }
     } catch (error: any) {
-      setError(error?.message || 'Failed to make call')
+      setError(error?.response?.data?.message || error?.message || 'Failed to make call')
       setIsConnecting(false)
-      setCallStatus('')
       throw error
     }
   }
@@ -204,12 +199,33 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
     }
   }
 
-  const hangupCall = () => {
-    if (activeCall) {
-      activeCall.disconnect()
-    }
-    if (incomingCall) {
-      incomingCall.reject()
+  const hangupCall = async () => {
+    try {
+      // Disconnect Voice SDK call if active
+      if (activeCall) {
+        activeCall.disconnect()
+      }
+
+      // Reject incoming call if present
+      if (incomingCall) {
+        incomingCall.reject()
+      }
+
+      // Also hangup via backend API if we have a call SID
+      if (currentCallSid) {
+        try {
+          await voiceAPI.hangupCall(currentCallSid)
+        } catch (error) {
+          console.warn('Failed to hangup call via backend API:', error)
+          // Don't throw here as the Voice SDK disconnect might have worked
+        }
+      }
+
+      // Reset call state
+      resetCallState()
+    } catch (error: any) {
+      console.error('Error hanging up call:', error)
+      setError('Failed to hang up call')
     }
   }
 
@@ -228,7 +244,6 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
   }
 
   const value: VoiceContextType = {
-    device,
     isReady,
     isConnecting,
     activeCall,
