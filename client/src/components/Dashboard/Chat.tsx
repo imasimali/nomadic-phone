@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { Box, Card, CardContent, Typography, List, ListItem, ListItemIcon, ListItemText, Alert, Button, Avatar, Chip } from '@mui/material'
-import { Message, Phone, Refresh, Send } from '@mui/icons-material'
+import { Message, Refresh, Send } from '@mui/icons-material'
 import { smsAPI, SMS } from '../../services/api'
 import Conversation from './Conversation'
+import SMSModal from './SMSModal'
 
 interface ChatConversation {
   phoneNumber: string
@@ -17,6 +18,7 @@ const Chat: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
+  const [smsModalOpen, setSmsModalOpen] = useState(false)
 
   useEffect(() => {
     loadConversations()
@@ -32,7 +34,7 @@ const Chat: React.FC = () => {
       const conversationMap = new Map<string, ChatConversation>()
 
       ;(response.data.messages || []).forEach((message: SMS) => {
-        const otherNumber = message.direction === 'outbound' ? message.to_number : message.from_number
+        const otherNumber = message.direction.startsWith('outbound') ? message.to_number : message.from_number
 
         if (!conversationMap.has(otherNumber)) {
           conversationMap.set(otherNumber, {
@@ -112,9 +114,14 @@ const Chat: React.FC = () => {
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6">Conversations</Typography>
-        <Button variant="outlined" startIcon={<Refresh />} onClick={loadConversations} disabled={loading} size="small">
-          Refresh
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button variant="contained" startIcon={<Send />} onClick={() => setSmsModalOpen(true)} size="small">
+            New Message
+          </Button>
+          <Button variant="outlined" startIcon={<Refresh />} onClick={loadConversations} disabled={loading} size="small">
+            Refresh
+          </Button>
+        </Box>
       </Box>
 
       {/* Conversations List */}
@@ -164,10 +171,10 @@ const Chat: React.FC = () => {
                     }
                     secondary={
                       <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }} component="span">
-                        {conversation.direction === 'outbound' ? (
+                        {conversation.direction.startsWith('outbound') ? (
                           <Send sx={{ fontSize: 14, mr: 0.5, color: 'text.secondary' }} />
                         ) : (
-                          <Phone sx={{ fontSize: 14, mr: 0.5, color: 'text.secondary' }} />
+                          <Message sx={{ fontSize: 14, mr: 0.5, color: 'text.secondary' }} />
                         )}
                         <Typography variant="body2" color="text.secondary" component="span">
                           {truncateMessage(conversation.lastMessage)}
@@ -183,6 +190,13 @@ const Chat: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* SMS Modal */}
+      <SMSModal
+        open={smsModalOpen}
+        onClose={() => setSmsModalOpen(false)}
+        onMessageSent={loadConversations}
+      />
     </Box>
   )
 }

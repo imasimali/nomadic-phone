@@ -39,7 +39,7 @@ const Conversation: React.FC<ConversationProps> = ({ phoneNumber, onBack }) => {
 
       // Filter messages for this conversation
       const conversationMessages = allMessages.filter((msg: SMS) => {
-        const otherNumber = msg.direction === 'outbound' ? msg.to_number : msg.from_number
+        const otherNumber = msg.direction.startsWith('outbound') ? msg.to_number : msg.from_number
         return otherNumber === phoneNumber
       })
 
@@ -189,7 +189,7 @@ const Conversation: React.FC<ConversationProps> = ({ phoneNumber, onBack }) => {
                   key={message.id}
                   sx={{
                     display: 'flex',
-                    justifyContent: message.direction === 'outbound' ? 'flex-end' : 'flex-start',
+                    justifyContent: message.direction.startsWith('outbound') ? 'flex-end' : 'flex-start',
                     mb: 1,
                   }}
                 >
@@ -197,11 +197,11 @@ const Conversation: React.FC<ConversationProps> = ({ phoneNumber, onBack }) => {
                     sx={{
                       maxWidth: '70%',
                       p: 1.5,
-                      bgcolor: message.direction === 'outbound' ? 'primary.main' : 'grey.100',
-                      color: message.direction === 'outbound' ? 'primary.contrastText' : 'text.primary',
+                      bgcolor: message.direction.startsWith('outbound') ? 'primary.main' : 'grey.100',
+                      color: message.direction.startsWith('outbound') ? 'primary.contrastText' : 'text.primary',
                       borderRadius: 2,
-                      borderTopRightRadius: message.direction === 'outbound' ? 0.5 : 2,
-                      borderTopLeftRadius: message.direction === 'inbound' ? 0.5 : 2,
+                      borderTopRightRadius: message.direction.startsWith('outbound') ? 0.5 : 2,
+                      borderTopLeftRadius: message.direction.startsWith('inbound') ? 0.5 : 2,
                     }}
                   >
                     <Typography variant="body2">{message.body}</Typography>

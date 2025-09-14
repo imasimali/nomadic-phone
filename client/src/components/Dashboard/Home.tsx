@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Box, Grid, Card, CardContent, Typography, Button, Chip, List, ListItem, ListItemText, ListItemIcon, Divider, Alert } from '@mui/material'
-import { Phone, Message, CallMade, CallReceived, CheckCircle, Warning } from '@mui/icons-material'
+import { Phone, Message, CallMade, CallReceived, CheckCircle, Warning, Send } from '@mui/icons-material'
 import { useAuth } from '../../contexts/AuthContext'
 import { useVoice } from '../../contexts/VoiceContext'
 import { voiceAPI, smsAPI, Call, SMS } from '../../services/api'
@@ -27,11 +27,17 @@ const Home: React.FC<HomeProps> = ({ onNavigateToTab }) => {
 
   const loadDashboardData = async () => {
     try {
-      const [callsResponse, smsResponse] = await Promise.all([voiceAPI.getCalls({ limit: 5 }), smsAPI.getMessages({ limit: 5 })])
+      // Fetch more records to get better total estimates for dashboard
+      const [callsResponse, smsResponse, totalCallsResponse, totalSMSResponse] = await Promise.all([
+        voiceAPI.getCalls({ limit: 5 }), // For recent items
+        smsAPI.getMessages({ limit: 5 }), // For recent items
+        voiceAPI.getCalls({ limit: 100 }), // For total count estimate
+        smsAPI.getMessages({ limit: 100 }), // For total count estimate
+      ])
 
       setStats({
-        totalCalls: callsResponse.data.pagination.total,
-        totalSMS: smsResponse.data.pagination.total,
+        totalCalls: totalCallsResponse.data.pagination.total,
+        totalSMS: totalSMSResponse.data.pagination.total,
         recentCalls: callsResponse.data.calls,
         recentSMS: smsResponse.data.messages,
       })
@@ -147,9 +153,9 @@ const Home: React.FC<HomeProps> = ({ onNavigateToTab }) => {
                   {stats.recentCalls.map((call, index) => (
                     <React.Fragment key={call.id}>
                       <ListItem>
-                        <ListItemIcon>{call.direction === 'outbound' ? <CallMade color="primary" /> : <CallReceived color="secondary" />}</ListItemIcon>
+                        <ListItemIcon>{call.direction.startsWith('outbound') ? <CallMade color="primary" /> : <CallReceived color="success" />}</ListItemIcon>
                         <ListItemText
-                          primary={formatPhoneNumber(call.direction === 'outbound' ? call.to_number : call.from_number)}
+                          primary={formatPhoneNumber(call.direction.startsWith('outbound') ? call.to_number : call.from_number)}
                           secondary={
                             <React.Fragment>
                               <Typography variant="caption" component="span" display="block">
@@ -169,7 +175,7 @@ const Home: React.FC<HomeProps> = ({ onNavigateToTab }) => {
                   ))}
                 </List>
               )}
-              <Button variant="outlined" fullWidth sx={{ mt: 2 }} onClick={() => onNavigateToTab?.('recordings')}>
+              <Button variant="outlined" fullWidth sx={{ mt: 2 }} onClick={() => onNavigateToTab?.('voice')}>
                 View All Calls
               </Button>
             </CardContent>
@@ -191,10 +197,10 @@ const Home: React.FC<HomeProps> = ({ onNavigateToTab }) => {
                     <React.Fragment key={sms.id}>
                       <ListItem>
                         <ListItemIcon>
-                          <Message color={sms.direction === 'outbound' ? 'primary' : 'secondary'} />
+                          {sms.direction.startsWith('outbound') ? <Send color="primary" /> : <Message color="success" />}
                         </ListItemIcon>
                         <ListItemText
-                          primary={formatPhoneNumber(sms.direction === 'outbound' ? sms.to_number : sms.from_number)}
+                          primary={formatPhoneNumber(sms.direction.startsWith('outbound') ? sms.to_number : sms.from_number)}
                           secondary={
                             <React.Fragment>
                               <Typography variant="body2" noWrap component="span" display="block">
@@ -215,39 +221,6 @@ const Home: React.FC<HomeProps> = ({ onNavigateToTab }) => {
               <Button variant="outlined" fullWidth sx={{ mt: 2 }} onClick={() => onNavigateToTab?.('chats')}>
                 View All Messages
               </Button>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Quick Actions */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Quick Actions
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Button variant="contained" fullWidth startIcon={<Phone />} onClick={() => onNavigateToTab?.('voice')} disabled={!isReady}>
-                    Make Call
-                  </Button>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Button variant="contained" fullWidth startIcon={<Message />} onClick={() => onNavigateToTab?.('sms')}>
-                    Send SMS
-                  </Button>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Button variant="outlined" fullWidth onClick={() => onNavigateToTab?.('chats')}>
-                    View Chats
-                  </Button>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Button variant="outlined" fullWidth onClick={() => onNavigateToTab?.('recordings')}>
-                    Recordings
-                  </Button>
-                </Grid>
-              </Grid>
             </CardContent>
           </Card>
         </Grid>

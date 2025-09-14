@@ -56,11 +56,11 @@ const CallHistory: React.FC = () => {
   }
 
   const getCallIcon = (direction: string) => {
-    return direction === 'outbound' ? <CallMade color="primary" /> : <CallReceived color="success" />
+    return direction.startsWith('outbound') ? <CallMade color="primary" /> : <CallReceived color="success" />
   }
 
   const getCallNumber = (call: Call) => {
-    return call.direction === 'outbound' ? call.to_number : call.from_number
+    return call.direction.startsWith('outbound') ? call.to_number : call.from_number
   }
 
   return (

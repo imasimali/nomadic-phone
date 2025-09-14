@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Box, Card, CardContent, Typography, TextField, Button, Alert, Dialog, DialogTitle, DialogContent, DialogActions, Fab, Stack } from '@mui/material'
 import { Phone, CallEnd, Mic, MicOff } from '@mui/icons-material'
 import { useVoice } from '../../contexts/VoiceContext'
+import CallHistory from './CallHistory'
 
 const Voice: React.FC = () => {
   const { isReady, isConnecting, activeCall, incomingCall, makeCall, answerCall, rejectCall, hangupCall, muteCall, unmuteCall, isMuted, error } = useVoice()
@@ -136,6 +137,9 @@ const Voice: React.FC = () => {
           </Fab>
         </DialogActions>
       </Dialog>
+
+      {/* Call History */}
+      <CallHistory />
     </Box>
   )
 }

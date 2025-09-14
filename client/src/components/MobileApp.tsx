@@ -16,17 +16,16 @@ import {
   Divider,
   Badge,
 } from '@mui/material'
-import { Dashboard as DashboardIcon, Phone, Message, Chat as ChatIcon, RecordVoiceOver, Settings as SettingsIcon, AccountCircle, Logout } from '@mui/icons-material'
+import { Dashboard as DashboardIcon, Phone, Chat as ChatIcon, RecordVoiceOver, Settings as SettingsIcon, AccountCircle, Logout } from '@mui/icons-material'
 import { useAuth } from '../contexts/AuthContext'
 import { useVoice } from '../contexts/VoiceContext'
 import Voice from './Dashboard/Voice'
-import SMS from './Dashboard/SMS'
 import Chat from './Dashboard/Chat'
 import Recordings from './Dashboard/Recordings'
 import Settings from './Dashboard/Settings'
 import Home from './Dashboard/Home'
 
-type TabValue = 'dashboard' | 'voice' | 'sms' | 'chats' | 'recordings'
+type TabValue = 'dashboard' | 'voice' | 'chats' | 'recordings'
 
 const MobileApp: React.FC = () => {
   const { user, logout } = useAuth()
@@ -39,7 +38,6 @@ const MobileApp: React.FC = () => {
   const getCurrentTab = (): TabValue => {
     const path = location.pathname
     if (path === '/voice') return 'voice'
-    if (path === '/sms') return 'sms'
     if (path === '/chats') return 'chats'
     if (path === '/recordings') return 'recordings'
     return 'dashboard'
@@ -80,7 +78,6 @@ const MobileApp: React.FC = () => {
       <Routes>
         <Route path="/" element={<Home onNavigateToTab={handleTabChange} />} />
         <Route path="voice" element={<Voice />} />
-        <Route path="sms" element={<SMS />} />
         <Route path="chats" element={<Chat />} />
         <Route path="recordings" element={<Recordings />} />
         <Route path="settings" element={<Settings />} />
@@ -100,13 +97,11 @@ const MobileApp: React.FC = () => {
                 ? 'Dashboard'
                 : currentTab === 'voice'
                   ? 'Voice'
-                  : currentTab === 'sms'
-                    ? 'Messages'
-                    : currentTab === 'chats'
-                      ? 'Chats'
-                      : currentTab === 'recordings'
-                        ? 'Recordings'
-                        : 'Nomadic Phone'}
+                  : currentTab === 'chats'
+                    ? 'Chats'
+                    : currentTab === 'recordings'
+                      ? 'Recordings'
+                      : 'Nomadic Phone'}
           </Typography>
 
           {/* User Menu */}
@@ -204,7 +199,6 @@ const MobileApp: React.FC = () => {
             )
           }
         />
-        <BottomNavigationAction label="Messages" value="sms" icon={<Message />} />
         <BottomNavigationAction label="Chats" value="chats" icon={<ChatIcon />} />
         <BottomNavigationAction label="Recordings" value="recordings" icon={<RecordVoiceOver />} />
       </BottomNavigation>

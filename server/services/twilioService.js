@@ -17,10 +17,13 @@ class TwilioService {
   // Call-related methods
   async getCalls(options = {}) {
     const { limit = 20, direction } = options
+    const requestedLimit = Math.min(limit, 1000)
 
     try {
+      // Fetch more than needed to account for filtering and deduplication
+      const fetchLimit = Math.min(requestedLimit * 2, 1000)
       const twilioOptions = {
-        limit: Math.min(limit, 50), // Keep it simple
+        limit: fetchLimit,
       }
 
       // Add filters if provided
@@ -52,13 +55,16 @@ class TwilioService {
       // Sort by creation date (newest first)
       transformedCalls.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
+      // Apply the requested limit
+      const limitedCalls = transformedCalls.slice(0, requestedLimit)
+
       return {
-        calls: transformedCalls,
+        calls: limitedCalls,
         pagination: {
           page: 1,
-          limit: transformedCalls.length,
-          total: transformedCalls.length,
-          pages: 1,
+          limit: requestedLimit,
+          total: transformedCalls.length, // Total fetched, not total available
+          pages: Math.ceil(transformedCalls.length / requestedLimit),
         },
       }
     } catch (error) {
@@ -99,9 +105,7 @@ class TwilioService {
     const { limit = 20 } = options
 
     try {
-      const twilioOptions = {
-        limit: Math.min(limit, 50),
-      }
+      const twilioOptions = { limit: Math.min(limit, 1000) }
 
       const recordings = await this.client.recordings.list(twilioOptions)
 
@@ -206,10 +210,13 @@ class TwilioService {
   // SMS-related methods
   async getMessages(options = {}) {
     const { limit = 20, direction } = options
+    const requestedLimit = Math.min(limit, 1000)
 
     try {
+      // Fetch more than needed to account for filtering and deduplication
+      const fetchLimit = Math.min(requestedLimit * 2, 1000)
       const twilioOptions = {
-        limit: Math.min(limit, 50),
+        limit: fetchLimit,
       }
 
       // Always filter by our phone number to ensure we only get messages to/from our number
@@ -272,18 +279,136 @@ class TwilioService {
       // Sort by creation date (newest first)
       uniqueMessages.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
+      // Apply the requested limit to the final result
+      const limitedMessages = uniqueMessages.slice(0, requestedLimit)
+
       return {
-        messages: uniqueMessages,
+        messages: limitedMessages,
         pagination: {
           page: 1,
-          limit: uniqueMessages.length,
-          total: uniqueMessages.length,
-          pages: 1,
+          limit: requestedLimit,
+          total: uniqueMessages.length, // Total fetched, not total available
+          pages: Math.ceil(uniqueMessages.length / requestedLimit),
         },
       }
     } catch (error) {
       console.error('Error fetching messages from Twilio:', error)
       throw new Error(`Failed to fetch messages: ${error.message}`)
+    }
+  }
+
+  // Get conversation with a specific phone number
+  async getConversation(phoneNumber, options = {}) {
+    const { limit = 50 } = options
+
+    try {
+      // Get messages to and from the specific phone number
+      const [inboundMessages, outboundMessages] = await Promise.all([
+        this.client.messages.list({
+          to: this.phoneNumber,
+          from: phoneNumber,
+          limit: Math.min(limit, 1000),
+        }),
+        this.client.messages.list({
+          from: this.phoneNumber,
+          to: phoneNumber,
+          limit: Math.min(limit, 1000),
+        }),
+      ])
+
+      const allMessages = [...inboundMessages, ...outboundMessages]
+
+      // Transform messages
+      const transformedMessages = allMessages.map((message) => ({
+        id: message.sid,
+        message_sid: message.sid,
+        from_number: message.from,
+        to_number: message.to,
+        direction: message.from === this.phoneNumber ? 'outbound' : 'inbound',
+        body: message.body,
+        status: message.status,
+        created_at: message.dateCreated,
+        updated_at: message.dateUpdated,
+      }))
+
+      // Sort by creation date (oldest first for conversation view)
+      transformedMessages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+
+      // Apply limit
+      const limitedMessages = transformedMessages.slice(0, limit)
+
+      return {
+        messages: limitedMessages,
+        pagination: {
+          page: 1,
+          limit: limit,
+          total: limitedMessages.length,
+          pages: 1,
+        },
+      }
+    } catch (error) {
+      console.error('Error fetching conversation from Twilio:', error)
+      throw new Error(`Failed to fetch conversation: ${error.message}`)
+    }
+  }
+
+  // Get list of conversations (unique phone numbers with latest message)
+  async getConversations() {
+    try {
+      // Fetch recent messages to build conversation list
+      const messages = await this.getMessages({ limit: 100 })
+
+      const conversationMap = new Map()
+
+      messages.messages.forEach((message) => {
+        const otherNumber = message.direction === 'outbound' ? message.to_number : message.from_number
+
+        if (!conversationMap.has(otherNumber)) {
+          conversationMap.set(otherNumber, {
+            phoneNumber: otherNumber,
+            lastMessage: message.body,
+            lastMessageTime: message.created_at,
+            direction: message.direction,
+          })
+        } else {
+          const existing = conversationMap.get(otherNumber)
+          if (new Date(message.created_at) > new Date(existing.lastMessageTime)) {
+            existing.lastMessage = message.body
+            existing.lastMessageTime = message.created_at
+            existing.direction = message.direction
+          }
+        }
+      })
+
+      const conversations = Array.from(conversationMap.values())
+      conversations.sort((a, b) => new Date(b.lastMessageTime) - new Date(a.lastMessageTime))
+
+      return conversations
+    } catch (error) {
+      console.error('Error fetching conversations from Twilio:', error)
+      throw new Error(`Failed to fetch conversations: ${error.message}`)
+    }
+  }
+
+  // Get a specific message
+  async getMessage(messageSid) {
+    try {
+      const message = await this.client.messages(messageSid).fetch()
+
+      return {
+        id: message.sid,
+        message_sid: message.sid,
+        from_number: message.from,
+        to_number: message.to,
+        direction: message.from === this.phoneNumber ? 'outbound' : 'inbound',
+        body: message.body,
+        status: message.status,
+        created_at: message.dateCreated,
+        updated_at: message.dateUpdated,
+      }
+    } catch (error) {
+      console.error('Error fetching message from Twilio:', error)
+      throw new Error(`Failed to fetch message: ${error.message}`)
     }
   }
 
