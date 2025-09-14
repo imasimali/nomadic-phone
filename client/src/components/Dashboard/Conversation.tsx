@@ -168,7 +168,7 @@ const Conversation: React.FC<ConversationProps> = ({ phoneNumber, onBack }) => {
   return (
     <Box
       sx={{
-        height: 'calc(100vh - 120px)', // Account for main app header (64px) + bottom nav (56px)
+        height: 'calc(100vh - 140px)', // Account for main app header + bottom nav
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
