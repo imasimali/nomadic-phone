@@ -19,6 +19,22 @@ class TwiMLAppService {
     }
 
     try {
+      // Build configuration object for TwiML Application
+      const appConfig = {
+        friendlyName: this.APP_NAME,
+        voiceUrl: `${config.WEBHOOK_BASE_URL}/webhooks/voice/twiml-app`,
+        voiceMethod: 'POST',
+        voiceFallbackUrl: `${config.WEBHOOK_BASE_URL}/webhooks/voice/twiml-app`,
+        voiceFallbackMethod: 'POST',
+        statusCallback: `${config.WEBHOOK_BASE_URL}/webhooks/voice/status`,
+        statusCallbackMethod: 'POST',
+        smsUrl: `${config.WEBHOOK_BASE_URL}/webhooks/sms/incoming`,
+        smsMethod: 'POST',
+        smsFallbackUrl: `${config.WEBHOOK_BASE_URL}/webhooks/sms/incoming`,
+        smsFallbackMethod: 'POST',
+        smsStatusCallback: `${config.WEBHOOK_BASE_URL}/webhooks/sms/status`,
+      }
+
       // First, try to find existing app by name
       const existingApps = await this.client.applications.list({
         friendlyName: this.APP_NAME,
@@ -31,32 +47,13 @@ class TwiMLAppService {
         app = existingApps[0]
         console.log(`📱 Found existing TwiML App: ${app.sid}`)
 
-        // Update the app with current webhook URLs
-        app = await this.client.applications(app.sid).update({
-          friendlyName: this.APP_NAME,
-          voiceUrl: `${config.WEBHOOK_BASE_URL}/webhooks/voice/twiml-app`,
-          voiceMethod: 'POST',
-          voiceFallbackUrl: `${config.WEBHOOK_BASE_URL}/webhooks/voice/twiml-app`,
-          voiceFallbackMethod: 'POST',
-          statusCallback: `${config.WEBHOOK_BASE_URL}/webhooks/voice/status`,
-          statusCallbackMethod: 'POST',
-        })
-
+        app = await this.client.applications(app.sid).update(appConfig)
         console.log(`✅ Updated TwiML App: ${app.sid}`)
       } else {
         // Create new app
         console.log(`🆕 Creating new TwiML App: ${this.APP_NAME}`)
 
-        app = await this.client.applications.create({
-          friendlyName: this.APP_NAME,
-          voiceUrl: `${config.WEBHOOK_BASE_URL}/webhooks/voice/twiml-app`,
-          voiceMethod: 'POST',
-          voiceFallbackUrl: `${config.WEBHOOK_BASE_URL}/webhooks/voice/twiml-app`,
-          voiceFallbackMethod: 'POST',
-          statusCallback: `${config.WEBHOOK_BASE_URL}/webhooks/voice/status`,
-          statusCallbackMethod: 'POST',
-        })
-
+        app = await this.client.applications.create(appConfig)
         console.log(`✅ Created TwiML App: ${app.sid}`)
       }
 
@@ -67,6 +64,7 @@ class TwiMLAppService {
         sid: app.sid,
         friendlyName: app.friendlyName,
         voiceUrl: app.voiceUrl,
+        smsUrl: app.smsUrl,
         created: existingApps.length === 0,
       }
     } catch (error) {

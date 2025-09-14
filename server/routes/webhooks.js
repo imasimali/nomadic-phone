@@ -223,7 +223,7 @@ router.post(
       return res.status(200).send('OK')
     }
 
-    console.log(`Received SMS from ${From}: ${Body}`)
+    console.log(`📱 Received SMS from ${From}: ${Body}`)
 
     // Handle media URLs for MMS
     const mediaUrls = []
@@ -235,6 +235,14 @@ router.post(
           console.log(`Media URL ${i}: ${mediaUrl}`)
         }
       }
+    }
+
+    // Send push notification for incoming SMS
+    try {
+      await pushoverService.sendIncomingSMSNotification(From, Body, MessageSid, mediaUrls.length > 0)
+    } catch (error) {
+      console.error('Failed to send SMS notification:', error)
+      // Don't fail the webhook if notification fails
     }
 
     res.status(200).send('OK')

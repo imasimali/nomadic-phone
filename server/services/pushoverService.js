@@ -150,6 +150,34 @@ class PushoverService {
   }
 
   /**
+   * Send an incoming SMS notification
+   * @param {string} fromNumber - The sender's phone number
+   * @param {string} messageBody - The SMS message content
+   * @param {string} messageSid - The Twilio message SID
+   * @param {boolean} hasMedia - Whether the message contains media (MMS)
+   * @returns {Promise<Object>} Response from Pushover API
+   */
+  async sendIncomingSMSNotification(fromNumber, messageBody, messageSid, hasMedia = false) {
+    const formattedNumber = this.formatPhoneNumber(fromNumber)
+    const messageType = hasMedia ? 'MMS' : 'SMS'
+    const icon = hasMedia ? '📷' : '💬'
+
+    // Truncate message body for notification (keep it concise)
+    const truncatedBody = messageBody && messageBody.length > 100
+      ? messageBody.substring(0, 100) + '...'
+      : messageBody || (hasMedia ? '[Media message]' : '[Empty message]')
+
+    return this.sendNotification({
+      title: `${icon} New ${messageType}`,
+      message: `From ${formattedNumber}: ${truncatedBody}`,
+      priority: '1', // High priority for SMS messages
+      sound: 'cashregister', // Use a distinctive sound for SMS
+      url: `${config.APP_URL}/sms`,
+      urlTitle: 'View Messages',
+    })
+  }
+
+  /**
    * Format phone number for display
    * @param {string} phoneNumber - Raw phone number
    * @returns {string} Formatted phone number
