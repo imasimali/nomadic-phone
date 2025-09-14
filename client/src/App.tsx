@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { CssBaseline, Box } from '@mui/material'
 import { Provider as JotaiProvider } from 'jotai'
-import { HelmetProvider } from 'react-helmet-async'
+import { HelmetProvider } from '@dr.pogodin/react-helmet'
 import { useAuth, useAuthInit } from './contexts/AuthContext'
 import { useVoiceInit } from './contexts/VoiceContext'
 import Login from './components/Auth/Login'
