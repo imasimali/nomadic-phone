@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Box, Typography, TextField, Button, Alert, Paper, IconButton, AppBar, Toolbar } from '@mui/material'
-import { Send, ArrowBack, Refresh } from '@mui/icons-material'
+import { Send, ArrowBack, Refresh, Check, CheckCircle, Error, Schedule, HourglassEmpty } from '@mui/icons-material'
 import { smsAPI, SMS } from '../../services/api'
 
 interface ConversationProps {
@@ -98,6 +98,60 @@ const Conversation: React.FC<ConversationProps> = ({ phoneNumber, onBack }) => {
       return 'Yesterday'
     } else {
       return date.toLocaleDateString()
+    }
+  }
+
+  const getStatusIcon = (status: string, direction: string) => {
+    // Only show status for outbound messages
+    if (!direction.startsWith('outbound')) {
+      return null
+    }
+
+    switch (status.toLowerCase()) {
+      case 'delivered':
+        return <CheckCircle sx={{ fontSize: 14, opacity: 0.7 }} />
+      case 'sent':
+        return <Check sx={{ fontSize: 14, opacity: 0.7 }} />
+      case 'failed':
+      case 'undelivered':
+        return <Error sx={{ fontSize: 14, opacity: 0.7, color: 'error.main' }} />
+      case 'queued':
+      case 'accepted':
+        return <Schedule sx={{ fontSize: 14, opacity: 0.7 }} />
+      case 'sending':
+        return <HourglassEmpty sx={{ fontSize: 14, opacity: 0.7 }} />
+      default:
+        return null
+    }
+  }
+
+  const getStatusText = (status: string, direction: string) => {
+    // Only show status for outbound messages
+    if (!direction.startsWith('outbound')) {
+      return ''
+    }
+
+    switch (status.toLowerCase()) {
+      case 'delivered':
+        return 'Delivered'
+      case 'sent':
+        return 'Sent'
+      case 'failed':
+        return 'Failed'
+      case 'undelivered':
+        return 'Undelivered'
+      case 'queued':
+        return 'Queued'
+      case 'accepted':
+        return 'Accepted'
+      case 'sending':
+        return 'Sending'
+      case 'receiving':
+        return 'Receiving'
+      case 'received':
+        return 'Received'
+      default:
+        return status
     }
   }
 
@@ -205,17 +259,37 @@ const Conversation: React.FC<ConversationProps> = ({ phoneNumber, onBack }) => {
                     }}
                   >
                     <Typography variant="body2">{message.body}</Typography>
-                    <Typography
-                      variant="caption"
+                    <Box
                       sx={{
-                        opacity: 0.7,
-                        display: 'block',
-                        textAlign: 'right',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
                         mt: 0.5,
                       }}
                     >
-                      {formatTime(message.created_at)}
-                    </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          opacity: 0.7,
+                        }}
+                      >
+                        {formatTime(message.created_at)}
+                      </Typography>
+                      {message.direction.startsWith('outbound') && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 1 }}>
+                          {getStatusIcon(message.status, message.direction)}
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              opacity: 0.7,
+                              fontSize: '0.7rem',
+                            }}
+                          >
+                            {getStatusText(message.status, message.direction)}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
                   </Paper>
                 </Box>
               ))}
@@ -244,7 +318,7 @@ const Conversation: React.FC<ConversationProps> = ({ phoneNumber, onBack }) => {
             placeholder="Type a message..."
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={(e) => {
+            onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
                 handleSendMessage()
