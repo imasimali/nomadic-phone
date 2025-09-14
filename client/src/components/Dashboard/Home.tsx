@@ -196,9 +196,7 @@ const Home: React.FC<HomeProps> = ({ onNavigateToTab }) => {
                   {stats.recentSMS.map((sms, index) => (
                     <React.Fragment key={sms.id}>
                       <ListItem>
-                        <ListItemIcon>
-                          {sms.direction.startsWith('outbound') ? <Send color="primary" /> : <Message color="success" />}
-                        </ListItemIcon>
+                        <ListItemIcon>{sms.direction.startsWith('outbound') ? <Send color="primary" /> : <Message color="success" />}</ListItemIcon>
                         <ListItemText
                           primary={formatPhoneNumber(sms.direction.startsWith('outbound') ? sms.to_number : sms.from_number)}
                           secondary={

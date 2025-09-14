@@ -44,7 +44,6 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
   const [isMuted, setIsMuted] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-
   // Computed call status
   const callStatus = incomingCall ? 'incoming' : isConnecting ? 'connecting' : activeCall ? 'connected' : ''
 
@@ -198,7 +197,7 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
           To: phoneNumber,
           // The From parameter will be handled by the webhook based on Twilio configuration
           // But we can pass it explicitly if needed
-        }
+        },
       })
 
       console.log('✅ Call object created, setting up listeners...')

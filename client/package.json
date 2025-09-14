@@ -33,8 +33,7 @@
     "cap:ios": "npx cap open ios",
     "cap:android": "npx cap open android",
     "cap:run:ios": "npx cap run ios",
-    "cap:run:android": "npx cap run android",
-    "lint": "react-scripts build"
+    "cap:run:android": "npx cap run android"
   },
   "proxy": "http://localhost:3001",
   "eslintConfig": {

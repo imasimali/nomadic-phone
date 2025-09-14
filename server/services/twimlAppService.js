@@ -20,9 +20,9 @@ class TwiMLAppService {
 
     try {
       // First, try to find existing app by name
-      const existingApps = await this.client.applications.list({ 
+      const existingApps = await this.client.applications.list({
         friendlyName: this.APP_NAME,
-        limit: 1 
+        limit: 1,
       })
 
       let app
@@ -30,7 +30,7 @@ class TwiMLAppService {
         // Update existing app
         app = existingApps[0]
         console.log(`📱 Found existing TwiML App: ${app.sid}`)
-        
+
         // Update the app with current webhook URLs
         app = await this.client.applications(app.sid).update({
           friendlyName: this.APP_NAME,
@@ -39,14 +39,14 @@ class TwiMLAppService {
           voiceFallbackUrl: `${config.WEBHOOK_BASE_URL}/webhooks/voice/twiml-app`,
           voiceFallbackMethod: 'POST',
           statusCallback: `${config.WEBHOOK_BASE_URL}/webhooks/voice/status`,
-          statusCallbackMethod: 'POST'
+          statusCallbackMethod: 'POST',
         })
-        
+
         console.log(`✅ Updated TwiML App: ${app.sid}`)
       } else {
         // Create new app
         console.log(`🆕 Creating new TwiML App: ${this.APP_NAME}`)
-        
+
         app = await this.client.applications.create({
           friendlyName: this.APP_NAME,
           voiceUrl: `${config.WEBHOOK_BASE_URL}/webhooks/voice/twiml-app`,
@@ -54,9 +54,9 @@ class TwiMLAppService {
           voiceFallbackUrl: `${config.WEBHOOK_BASE_URL}/webhooks/voice/twiml-app`,
           voiceFallbackMethod: 'POST',
           statusCallback: `${config.WEBHOOK_BASE_URL}/webhooks/voice/status`,
-          statusCallbackMethod: 'POST'
+          statusCallbackMethod: 'POST',
         })
-        
+
         console.log(`✅ Created TwiML App: ${app.sid}`)
       }
 
@@ -67,7 +67,7 @@ class TwiMLAppService {
         sid: app.sid,
         friendlyName: app.friendlyName,
         voiceUrl: app.voiceUrl,
-        created: existingApps.length === 0
+        created: existingApps.length === 0,
       }
     } catch (error) {
       console.error('Error managing TwiML Application:', error)
@@ -79,9 +79,9 @@ class TwiMLAppService {
     try {
       const fs = await import('fs')
       const path = await import('path')
-      
+
       const envPath = path.resolve('.env')
-      
+
       // Read current .env file
       let envContent = ''
       try {
@@ -92,19 +92,16 @@ class TwiMLAppService {
 
       // Update or add TWILIO_APPLICATION_SID
       const appSidLine = `TWILIO_APPLICATION_SID=${appSid}`
-      
+
       if (envContent.includes('TWILIO_APPLICATION_SID=')) {
         // Replace existing line
-        envContent = envContent.replace(
-          /TWILIO_APPLICATION_SID=.*/,
-          appSidLine
-        )
+        envContent = envContent.replace(/TWILIO_APPLICATION_SID=.*/, appSidLine)
         console.log(`📝 Updated TWILIO_APPLICATION_SID in .env file`)
       } else {
         // Add new line after other Twilio config
         const lines = envContent.split('\n')
         let insertIndex = -1
-        
+
         // Find where to insert (after TWILIO_PHONE_NUMBER)
         for (let i = 0; i < lines.length; i++) {
           if (lines[i].startsWith('TWILIO_PHONE_NUMBER=')) {
@@ -112,7 +109,7 @@ class TwiMLAppService {
             break
           }
         }
-        
+
         if (insertIndex > -1) {
           lines.splice(insertIndex, 0, appSidLine)
         } else {
@@ -129,18 +126,17 @@ class TwiMLAppService {
             lines.push(appSidLine)
           }
         }
-        
+
         envContent = lines.join('\n')
         console.log(`📝 Added TWILIO_APPLICATION_SID to .env file`)
       }
 
       // Write back to .env file
       fs.writeFileSync(envPath, envContent)
-      
+
       // Update the config object in memory
       config.TWILIO_APPLICATION_SID = appSid
       process.env.TWILIO_APPLICATION_SID = appSid
-      
     } catch (error) {
       console.warn('Could not update .env file:', error.message)
       // Don't throw error, just warn - the app can still work
@@ -153,9 +149,9 @@ class TwiMLAppService {
     }
 
     try {
-      const apps = await this.client.applications.list({ 
+      const apps = await this.client.applications.list({
         friendlyName: this.APP_NAME,
-        limit: 1 
+        limit: 1,
       })
 
       return apps.length > 0 ? apps[0] : null

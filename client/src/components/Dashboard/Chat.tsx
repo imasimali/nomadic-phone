@@ -192,11 +192,7 @@ const Chat: React.FC = () => {
       </Card>
 
       {/* SMS Modal */}
-      <SMSModal
-        open={smsModalOpen}
-        onClose={() => setSmsModalOpen(false)}
-        onMessageSent={loadConversations}
-      />
+      <SMSModal open={smsModalOpen} onClose={() => setSmsModalOpen(false)} onMessageSent={loadConversations} />
     </Box>
   )
 }

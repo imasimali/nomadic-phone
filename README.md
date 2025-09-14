@@ -90,8 +90,6 @@ Set up Pushover for push notifications on incoming calls and voicemails:
    ```
 4. Test with: `node test-pushover.js`
 
-See [PUSHOVER_SETUP.md](PUSHOVER_SETUP.md) for detailed setup instructions.
-
 ## Usage
 
 1. **Login** with your configured password

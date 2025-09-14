@@ -14,9 +14,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "lint": "eslint server/ --ext .js && cd client && npm run build",
-    "lint:fix": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\" \"client/src/**/*.{js,jsx,ts,tsx,css}\" && eslint server/ --ext .js --fix",
-    "check": "npm run format:all && npm run lint:all",
-    "fix": "npm run format:all && npm run lint:fix && cd client && npm run lint:build"
+    "lint:fix": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\" \"client/src/**/*.{js,jsx,ts,tsx,css}\" && eslint server/ --ext .js --fix"
   },
   "keywords": [
     "twilio",

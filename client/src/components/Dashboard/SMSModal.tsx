@@ -1,15 +1,5 @@
 import React, { useState } from 'react'
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Button,
-  Alert,
-  Stack,
-  IconButton,
-} from '@mui/material'
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Alert, Stack, IconButton } from '@mui/material'
 import { Send, Close } from '@mui/icons-material'
 import { smsAPI } from '../../services/api'
 
@@ -58,10 +48,10 @@ const SMSModal: React.FC<SMSModalProps> = ({ open, onClose, onMessageSent, initi
       await smsAPI.sendSMS(formattedNumber, message.trim())
       setMessage('')
       setSuccess('Message sent successfully!')
-      
+
       // Call the callback to refresh conversations
       onMessageSent?.()
-      
+
       // Close modal after a short delay to show success message
       setTimeout(() => {
         onClose()
@@ -72,8 +62,6 @@ const SMSModal: React.FC<SMSModalProps> = ({ open, onClose, onMessageSent, initi
       setLoading(false)
     }
   }
-
-
 
   const handleClose = () => {
     if (!loading) {
@@ -89,7 +77,7 @@ const SMSModal: React.FC<SMSModalProps> = ({ open, onClose, onMessageSent, initi
           <Close />
         </IconButton>
       </DialogTitle>
-      
+
       <DialogContent>
         {/* Error Alert */}
         {error && (
@@ -106,14 +94,7 @@ const SMSModal: React.FC<SMSModalProps> = ({ open, onClose, onMessageSent, initi
         )}
 
         <Stack spacing={2} sx={{ mt: 1 }}>
-          <TextField
-            fullWidth
-            label="Phone Number"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            placeholder="+1 (555) 123-4567"
-            disabled={loading}
-          />
+          <TextField fullWidth label="Phone Number" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="+1 (555) 123-4567" disabled={loading} />
 
           <TextField
             fullWidth
@@ -131,8 +112,6 @@ const SMSModal: React.FC<SMSModalProps> = ({ open, onClose, onMessageSent, initi
             rows={4}
             disabled={loading}
           />
-
-
         </Stack>
       </DialogContent>
 
@@ -140,12 +119,7 @@ const SMSModal: React.FC<SMSModalProps> = ({ open, onClose, onMessageSent, initi
         <Button onClick={handleClose} disabled={loading}>
           Cancel
         </Button>
-        <Button
-          variant="contained"
-          startIcon={<Send />}
-          onClick={sendMessage}
-          disabled={loading || !phoneNumber.trim() || !message.trim()}
-        >
+        <Button variant="contained" startIcon={<Send />} onClick={sendMessage} disabled={loading || !phoneNumber.trim() || !message.trim()}>
           {loading ? 'Sending...' : 'Send Message'}
         </Button>
       </DialogActions>

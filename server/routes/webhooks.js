@@ -56,7 +56,7 @@ router.post(
         const dial = twiml.dial({
           timeout: 30, // Ring for 30 seconds before going to voicemail
           action: `${config.WEBHOOK_BASE_URL}/webhooks/voice/call-timeout`,
-          method: 'POST'
+          method: 'POST',
         })
         dial.number(config.REDIRECT_NUMBER)
       } else {
@@ -66,7 +66,7 @@ router.post(
           callerId: To,
           timeout: 30, // Ring for 30 seconds before going to voicemail
           action: `${config.WEBHOOK_BASE_URL}/webhooks/voice/call-timeout`,
-          method: 'POST'
+          method: 'POST',
         })
         dial.client('nomadic_client')
       }
@@ -79,7 +79,7 @@ router.post(
         callerId: config.TWILIO_PHONE_NUMBER,
         // Set up event callbacks for call progress
         action: `${config.WEBHOOK_BASE_URL}/webhooks/voice/dial-status`,
-        method: 'POST'
+        method: 'POST',
       })
       dial.number(To)
     }
@@ -195,7 +195,7 @@ router.post(
           priority: '1',
           sound: 'magic',
           url: `${config.APP_URL}/recordings`,
-          urlTitle: 'Listen to Voicemail'
+          urlTitle: 'Listen to Voicemail',
         })
       } catch (error) {
         console.error('Failed to send voicemail notification:', error)

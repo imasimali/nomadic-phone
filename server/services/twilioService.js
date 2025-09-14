@@ -96,10 +96,6 @@ class TwilioService {
     }
   }
 
-
-
-
-
   // Get all recordings
   async getRecordings(options = {}) {
     const { limit = 20 } = options

@@ -83,8 +83,8 @@ router.post(
           sid: twimlApp.sid,
           friendlyName: twimlApp.friendlyName,
           voiceUrl: twimlApp.voiceUrl,
-          created: twimlApp.created
-        }
+          created: twimlApp.created,
+        },
       })
     } catch (error) {
       console.error('Error configuring TwiML Application:', error)
@@ -92,8 +92,6 @@ router.post(
     }
   }),
 )
-
-
 
 // Get call history
 router.get(
@@ -180,8 +178,6 @@ router.get(
   }),
 )
 
-
-
 // Get user's voice settings
 router.get(
   '/settings',
@@ -230,7 +226,7 @@ router.put(
         voice_message: process.env.VOICE_MESSAGE || "Hello, you've reached my voicemail. Please leave a message after the beep and press star to finish.",
         voice_language: process.env.VOICE_LANGUAGE || 'en-US',
         push_notifications: !!(process.env.PUSHOVER_USER_KEY && process.env.PUSHOVER_API_TOKEN),
-      }
+      },
     })
   }),
 )
