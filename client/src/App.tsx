@@ -1,13 +1,13 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline, Box } from '@mui/material';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { VoiceProvider } from './contexts/VoiceContext';
-import Login from './components/Auth/Login';
-import MobileApp from './components/MobileApp';
-import LoadingScreen from './components/Common/LoadingScreen';
-import { StatusBarManager } from './utils/statusBar';
+import React, { useEffect } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { CssBaseline, Box } from '@mui/material'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { VoiceProvider } from './contexts/VoiceContext'
+import Login from './components/Auth/Login'
+import MobileApp from './components/MobileApp'
+import LoadingScreen from './components/Common/LoadingScreen'
+import { StatusBarManager } from './utils/statusBar'
 
 // Simple mobile-first theme
 const theme = createTheme({
@@ -53,37 +53,37 @@ const theme = createTheme({
       },
     },
   },
-});
+})
 
 // Protected Route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth()
 
   if (isLoading) {
-    return <LoadingScreen />;
+    return <LoadingScreen />
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace />
   }
 
-  return <>{children}</>;
-};
+  return <>{children}</>
+}
 
 // Public Route component (redirects to dashboard if already authenticated)
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth()
 
   if (isLoading) {
-    return <LoadingScreen />;
+    return <LoadingScreen />
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/" replace />
   }
 
-  return <>{children}</>;
-};
+  return <>{children}</>
+}
 
 const AppContent: React.FC = () => {
   return (
@@ -105,14 +105,14 @@ const AppContent: React.FC = () => {
         }
       />
     </Routes>
-  );
-};
+  )
+}
 
 function App() {
   // Initialize StatusBar when app starts
   useEffect(() => {
-    StatusBarManager.initialize();
-  }, []);
+    StatusBarManager.initialize()
+  }, [])
 
   return (
     <Router>
@@ -120,19 +120,21 @@ function App() {
         <CssBaseline />
         <AuthProvider>
           <VoiceProvider>
-            <Box sx={{
-              minHeight: '100vh',
-              backgroundColor: 'background.default',
-              display: 'flex',
-              flexDirection: 'column'
-            }}>
+            <Box
+              sx={{
+                minHeight: '100vh',
+                backgroundColor: 'background.default',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
               <AppContent />
             </Box>
           </VoiceProvider>
         </AuthProvider>
       </ThemeProvider>
     </Router>
-  );
+  )
 }
 
-export default App;
+export default App

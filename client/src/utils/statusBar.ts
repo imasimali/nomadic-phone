@@ -1,34 +1,34 @@
-import { StatusBar, Style } from '@capacitor/status-bar';
-import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar'
+import { Capacitor } from '@capacitor/core'
 
 export class StatusBarManager {
-  private static initialized = false;
+  private static initialized = false
 
   /**
    * Initialize the status bar with proper configuration
    */
   static async initialize(): Promise<void> {
     if (!Capacitor.isNativePlatform() || this.initialized) {
-      return;
+      return
     }
 
     try {
       // Set status bar to not overlay the webview
-      await StatusBar.setOverlaysWebView({ overlay: false });
-      
+      await StatusBar.setOverlaysWebView({ overlay: false })
+
       // Set the status bar style to dark content (good for light backgrounds)
-      await StatusBar.setStyle({ style: Style.Dark });
-      
+      await StatusBar.setStyle({ style: Style.Dark })
+
       // Set the background color to match your app's primary color
-      await StatusBar.setBackgroundColor({ color: '#2c5aa0' });
-      
+      await StatusBar.setBackgroundColor({ color: '#2c5aa0' })
+
       // Show the status bar
-      await StatusBar.show();
-      
-      this.initialized = true;
-      console.log('StatusBar initialized successfully');
+      await StatusBar.show()
+
+      this.initialized = true
+      console.log('StatusBar initialized successfully')
     } catch (error) {
-      console.error('Failed to initialize StatusBar:', error);
+      console.error('Failed to initialize StatusBar:', error)
     }
   }
 
@@ -37,13 +37,13 @@ export class StatusBarManager {
    */
   static async setStyle(style: Style): Promise<void> {
     if (!Capacitor.isNativePlatform()) {
-      return;
+      return
     }
 
     try {
-      await StatusBar.setStyle({ style });
+      await StatusBar.setStyle({ style })
     } catch (error) {
-      console.error('Failed to set StatusBar style:', error);
+      console.error('Failed to set StatusBar style:', error)
     }
   }
 
@@ -52,13 +52,13 @@ export class StatusBarManager {
    */
   static async setBackgroundColor(color: string): Promise<void> {
     if (!Capacitor.isNativePlatform()) {
-      return;
+      return
     }
 
     try {
-      await StatusBar.setBackgroundColor({ color });
+      await StatusBar.setBackgroundColor({ color })
     } catch (error) {
-      console.error('Failed to set StatusBar background color:', error);
+      console.error('Failed to set StatusBar background color:', error)
     }
   }
 
@@ -67,13 +67,13 @@ export class StatusBarManager {
    */
   static async show(): Promise<void> {
     if (!Capacitor.isNativePlatform()) {
-      return;
+      return
     }
 
     try {
-      await StatusBar.show();
+      await StatusBar.show()
     } catch (error) {
-      console.error('Failed to show StatusBar:', error);
+      console.error('Failed to show StatusBar:', error)
     }
   }
 
@@ -82,13 +82,13 @@ export class StatusBarManager {
    */
   static async hide(): Promise<void> {
     if (!Capacitor.isNativePlatform()) {
-      return;
+      return
     }
 
     try {
-      await StatusBar.hide();
+      await StatusBar.hide()
     } catch (error) {
-      console.error('Failed to hide StatusBar:', error);
+      console.error('Failed to hide StatusBar:', error)
     }
   }
 
@@ -97,14 +97,14 @@ export class StatusBarManager {
    */
   static async getInfo(): Promise<any> {
     if (!Capacitor.isNativePlatform()) {
-      return null;
+      return null
     }
 
     try {
-      return await StatusBar.getInfo();
+      return await StatusBar.getInfo()
     } catch (error) {
-      console.error('Failed to get StatusBar info:', error);
-      return null;
+      console.error('Failed to get StatusBar info:', error)
+      return null
     }
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   Box,
   Card,
@@ -18,18 +18,10 @@ import {
   ListItemIcon,
   ListItemText,
   Chip,
-} from '@mui/material';
-import {
-  Save,
-  Refresh,
-  Phone,
-  Voicemail,
-  Info,
-  CheckCircle,
-  Warning,
-} from '@mui/icons-material';
-import { voiceAPI, VoiceSettings } from '../../services/api';
-import LoadingScreen from '../Common/LoadingScreen';
+} from '@mui/material'
+import { Save, Refresh, Phone, Voicemail, Info, CheckCircle, Warning } from '@mui/icons-material'
+import { voiceAPI, VoiceSettings } from '../../services/api'
+import LoadingScreen from '../Common/LoadingScreen'
 
 const Settings: React.FC = () => {
   const [settings, setSettings] = useState<VoiceSettings>({
@@ -37,89 +29,89 @@ const Settings: React.FC = () => {
     redirect_number: '',
     voice_language: 'en-US',
     voice_message: '',
-  });
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [originalSettings, setOriginalSettings] = useState<VoiceSettings | null>(null);
+  })
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [originalSettings, setOriginalSettings] = useState<VoiceSettings | null>(null)
 
   useEffect(() => {
-    loadSettings();
-  }, []);
+    loadSettings()
+  }, [])
 
   const loadSettings = async () => {
     try {
-      setLoading(true);
-      setError('');
-      
-      const response = await voiceAPI.getSettings();
-      const loadedSettings = response.data.settings;
-      
-      setSettings(loadedSettings);
-      setOriginalSettings(loadedSettings);
+      setLoading(true)
+      setError('')
+
+      const response = await voiceAPI.getSettings()
+      const loadedSettings = response.data.settings
+
+      setSettings(loadedSettings)
+      setOriginalSettings(loadedSettings)
     } catch (error: any) {
-      setError(error.response?.data?.error || 'Failed to load settings');
+      setError(error.response?.data?.error || 'Failed to load settings')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const saveSettings = async () => {
     try {
-      setSaving(true);
-      setError('');
-      setSuccess('');
+      setSaving(true)
+      setError('')
+      setSuccess('')
 
       // Validate settings
       if (settings.incoming_call_action === 'redirect' && !settings.redirect_number) {
-        setError('Redirect number is required when using redirect action');
-        return;
+        setError('Redirect number is required when using redirect action')
+        return
       }
 
       if (settings.voice_message.length > 500) {
-        setError('Voice message must be 500 characters or less');
-        return;
+        setError('Voice message must be 500 characters or less')
+        return
       }
 
-      await voiceAPI.updateSettings(settings);
-      setSuccess('Settings saved successfully!');
-      setOriginalSettings({ ...settings });
-      
+      await voiceAPI.updateSettings(settings)
+      setSuccess('Settings saved successfully!')
+      setOriginalSettings({ ...settings })
+
       // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(''), 3000);
+      setTimeout(() => setSuccess(''), 3000)
     } catch (error: any) {
-      setError(error.response?.data?.error || 'Failed to save settings');
+      setError(error.response?.data?.error || 'Failed to save settings')
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
-  };
+  }
 
   const resetSettings = () => {
     if (originalSettings) {
-      setSettings({ ...originalSettings });
-      setError('');
-      setSuccess('');
+      setSettings({ ...originalSettings })
+      setError('')
+      setSuccess('')
     }
-  };
+  }
 
   const hasChanges = () => {
-    if (!originalSettings) return false;
-    return JSON.stringify(settings) !== JSON.stringify(originalSettings);
-  };
+    if (!originalSettings) return false
+    return JSON.stringify(settings) !== JSON.stringify(originalSettings)
+  }
 
   const getActionDescription = (action: string) => {
     switch (action) {
       case 'recording':
-        return 'Incoming calls go directly to voicemail';
+        return 'Incoming calls go directly to voicemail'
       case 'client':
-        return 'Incoming calls ring in your browser';
+        return 'Incoming calls ring in your browser'
       case 'redirect':
-        return 'Incoming calls are forwarded to another number';
+        return 'Incoming calls are forwarded to another number'
       default:
-        return '';
+        return ''
     }
-  };
+  }
 
   const getLanguageLabel = (code: string) => {
     const languages: { [key: string]: string } = {
@@ -134,12 +126,12 @@ const Settings: React.FC = () => {
       'ja-JP': 'Japanese',
       'ko-KR': 'Korean',
       'zh-CN': 'Chinese (Simplified)',
-    };
-    return languages[code] || code;
-  };
+    }
+    return languages[code] || code
+  }
 
   if (loading) {
-    return <LoadingScreen />;
+    return <LoadingScreen />
   }
 
   return (
@@ -178,10 +170,12 @@ const Settings: React.FC = () => {
                     <Select
                       value={settings.incoming_call_action}
                       label="Incoming Call Action"
-                      onChange={(e) => setSettings({
-                        ...settings,
-                        incoming_call_action: e.target.value as 'recording' | 'client' | 'redirect'
-                      })}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          incoming_call_action: e.target.value as 'recording' | 'client' | 'redirect',
+                        })
+                      }
                     >
                       <MenuItem value="recording">
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -216,10 +210,12 @@ const Settings: React.FC = () => {
                       label="Redirect Phone Number"
                       placeholder="+1234567890"
                       value={settings.redirect_number || ''}
-                      onChange={(e) => setSettings({
-                        ...settings,
-                        redirect_number: e.target.value
-                      })}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          redirect_number: e.target.value,
+                        })
+                      }
                       helperText="Enter phone number in E.164 format (e.g., +1234567890)"
                     />
                   </Grid>
@@ -232,10 +228,12 @@ const Settings: React.FC = () => {
                     <Select
                       value={settings.voice_language}
                       label="Voice Language"
-                      onChange={(e) => setSettings({
-                        ...settings,
-                        voice_language: e.target.value
-                      })}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          voice_language: e.target.value,
+                        })
+                      }
                     >
                       <MenuItem value="en-US">{getLanguageLabel('en-US')}</MenuItem>
                       <MenuItem value="en-GB">{getLanguageLabel('en-GB')}</MenuItem>
@@ -261,10 +259,12 @@ const Settings: React.FC = () => {
                     label="Voicemail Message"
                     placeholder="Hello, you've reached my voicemail. Please leave a message after the beep."
                     value={settings.voice_message}
-                    onChange={(e) => setSettings({
-                      ...settings,
-                      voice_message: e.target.value
-                    })}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        voice_message: e.target.value,
+                      })
+                    }
                     helperText={`${settings.voice_message.length}/500 characters`}
                     error={settings.voice_message.length > 500}
                   />
@@ -275,27 +275,13 @@ const Settings: React.FC = () => {
 
               {/* Action Buttons */}
               <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                <Button
-                  variant="outlined"
-                  onClick={resetSettings}
-                  disabled={!hasChanges() || saving}
-                >
+                <Button variant="outlined" onClick={resetSettings} disabled={!hasChanges() || saving}>
                   Reset
                 </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<Refresh />}
-                  onClick={loadSettings}
-                  disabled={saving}
-                >
+                <Button variant="outlined" startIcon={<Refresh />} onClick={loadSettings} disabled={saving}>
                   Reload
                 </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<Save />}
-                  onClick={saveSettings}
-                  disabled={saving || !hasChanges()}
-                >
+                <Button variant="contained" startIcon={<Save />} onClick={saveSettings} disabled={saving || !hasChanges()}>
                   {saving ? 'Saving...' : 'Save Settings'}
                 </Button>
               </Box>
@@ -317,30 +303,21 @@ const Settings: React.FC = () => {
                   <ListItemIcon>
                     <Voicemail color="primary" />
                   </ListItemIcon>
-                  <ListItemText
-                    primary="Voicemail"
-                    secondary="Calls go directly to voicemail recording"
-                  />
+                  <ListItemText primary="Voicemail" secondary="Calls go directly to voicemail recording" />
                 </ListItem>
 
                 <ListItem>
                   <ListItemIcon>
                     <Phone color="primary" />
                   </ListItemIcon>
-                  <ListItemText
-                    primary="Ring Browser"
-                    secondary="Calls ring in your web browser"
-                  />
+                  <ListItemText primary="Ring Browser" secondary="Calls ring in your web browser" />
                 </ListItem>
 
                 <ListItem>
                   <ListItemIcon>
                     <Phone color="primary" />
                   </ListItemIcon>
-                  <ListItemText
-                    primary="Forward"
-                    secondary="Calls are forwarded to another number"
-                  />
+                  <ListItemText primary="Forward" secondary="Calls are forwarded to another number" />
                 </ListItem>
               </List>
 
@@ -360,15 +337,14 @@ const Settings: React.FC = () => {
               </Box>
 
               <Typography variant="body2" color="text.secondary">
-                <strong>Note:</strong> Settings are stored as environment variables. 
-                In a production setup, these would be persisted to a database.
+                <strong>Note:</strong> Settings are stored as environment variables. In a production setup, these would be persisted to a database.
               </Typography>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
     </Box>
-  );
-};
+  )
+}
 
-export default Settings;
+export default Settings

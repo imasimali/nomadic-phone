@@ -1,8 +1,8 @@
-import React from 'react';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import React from 'react'
+import { Box, CircularProgress, Typography } from '@mui/material'
 
 interface LoadingScreenProps {
-  message?: string;
+  message?: string
 }
 
 const LoadingScreen: React.FC<LoadingScreenProps> = ({ message = 'Loading...' }) => {
@@ -29,7 +29,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ message = 'Loading...' })
         {message}
       </Typography>
     </Box>
-  );
-};
+  )
+}
 
-export default LoadingScreen;
+export default LoadingScreen

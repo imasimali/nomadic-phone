@@ -1,137 +1,125 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Alert,
-  Paper,
-  IconButton,
-  AppBar,
-  Toolbar,
-} from '@mui/material';
-import {
-  Send,
-  ArrowBack,
-  Refresh,
-} from '@mui/icons-material';
-import { smsAPI, SMS } from '../../services/api';
+import React, { useState, useEffect, useRef } from 'react'
+import { Box, Typography, TextField, Button, Alert, Paper, IconButton, AppBar, Toolbar } from '@mui/material'
+import { Send, ArrowBack, Refresh } from '@mui/icons-material'
+import { smsAPI, SMS } from '../../services/api'
 
 interface ConversationProps {
-  phoneNumber: string;
-  onBack: () => void;
+  phoneNumber: string
+  onBack: () => void
 }
 
 const Conversation: React.FC<ConversationProps> = ({ phoneNumber, onBack }) => {
-  const [messages, setMessages] = useState<SMS[]>([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [messages, setMessages] = useState<SMS[]>([])
+  const [newMessage, setNewMessage] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    loadMessages();
-  }, [phoneNumber]);
+    loadMessages()
+  }, [phoneNumber])
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    scrollToBottom()
+  }, [messages])
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   const loadMessages = async () => {
     try {
-      setLoading(true);
-      setError('');
+      setLoading(true)
+      setError('')
 
       // Get all messages and filter by phone number
-      const response = await smsAPI.getMessages({ limit: 100 });
-      const allMessages = response.data.messages || [];
+      const response = await smsAPI.getMessages({ limit: 100 })
+      const allMessages = response.data.messages || []
 
       // Filter messages for this conversation
       const conversationMessages = allMessages.filter((msg: SMS) => {
-        const otherNumber = msg.direction === 'outbound' ? msg.to_number : msg.from_number;
-        return otherNumber === phoneNumber;
-      });
+        const otherNumber = msg.direction === 'outbound' ? msg.to_number : msg.from_number
+        return otherNumber === phoneNumber
+      })
 
       // Sort by date (oldest first for conversation view)
-      conversationMessages.sort((a: SMS, b: SMS) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      conversationMessages.sort((a: SMS, b: SMS) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
 
-      setMessages(conversationMessages);
+      setMessages(conversationMessages)
     } catch (error: any) {
-      setError(error.response?.data?.error || 'Failed to load messages');
+      setError(error.response?.data?.error || 'Failed to load messages')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim()) return
 
     try {
-      setSending(true);
-      setError('');
+      setSending(true)
+      setError('')
 
-      await smsAPI.sendSMS(phoneNumber, newMessage.trim());
+      await smsAPI.sendSMS(phoneNumber, newMessage.trim())
 
-      setNewMessage('');
+      setNewMessage('')
       // Reload messages to show the sent message
-      await loadMessages();
+      await loadMessages()
     } catch (error: any) {
-      setError(error.response?.data?.error || 'Failed to send message');
+      setError(error.response?.data?.error || 'Failed to send message')
     } finally {
-      setSending(false);
+      setSending(false)
     }
-  };
+  }
 
   const formatPhoneNumber = (number: string) => {
-    const cleaned = number.replace(/\D/g, '');
+    const cleaned = number.replace(/\D/g, '')
     if (cleaned.length === 11 && cleaned.startsWith('1')) {
-      return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
+      return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`
     }
-    return number;
-  };
+    return number
+  }
 
   const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
+    const date = new Date(dateString)
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+    const date = new Date(dateString)
+    const today = new Date()
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
 
     if (date.toDateString() === today.toDateString()) {
-      return 'Today';
+      return 'Today'
     } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
+      return 'Yesterday'
     } else {
-      return date.toLocaleDateString();
+      return date.toLocaleDateString()
     }
-  };
+  }
 
   // Group messages by date
   const groupedMessages = messages.reduce((groups: { [key: string]: SMS[] }, message) => {
-    const dateKey = formatDate(message.created_at);
+    const dateKey = formatDate(message.created_at)
     if (!groups[dateKey]) {
-      groups[dateKey] = [];
+      groups[dateKey] = []
     }
-    groups[dateKey].push(message);
-    return groups;
-  }, {});
+    groups[dateKey].push(message)
+    return groups
+  }, {})
 
   return (
-    <Box sx={{
-      height: 'calc(100vh - 120px)', // Account for main app header (64px) + bottom nav (56px)
-      display: 'flex',
-      flexDirection: 'column',
-      position: 'relative'
-    }}>
+    <Box
+      sx={{
+        height: 'calc(100vh - 120px)', // Account for main app header (64px) + bottom nav (56px)
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+      }}
+    >
       {/* Header */}
       <AppBar position="static" color="default" elevation={1} sx={{ flexShrink: 0 }}>
         <Toolbar>
@@ -155,12 +143,14 @@ const Conversation: React.FC<ConversationProps> = ({ phoneNumber, onBack }) => {
       )}
 
       {/* Messages */}
-      <Box sx={{
-        flex: 1,
-        overflow: 'auto',
-        p: 1,
-        minHeight: 0 // Important for flex child to be scrollable
-      }}>
+      <Box
+        sx={{
+          flex: 1,
+          overflow: 'auto',
+          p: 1,
+          minHeight: 0, // Important for flex child to be scrollable
+        }}
+      >
         {loading ? (
           <Box sx={{ p: 3, textAlign: 'center' }}>
             <Typography color="text.secondary">Loading messages...</Typography>
@@ -177,14 +167,18 @@ const Conversation: React.FC<ConversationProps> = ({ phoneNumber, onBack }) => {
             <Box key={date}>
               {/* Date separator */}
               <Box sx={{ textAlign: 'center', my: 2 }}>
-                <Typography variant="caption" color="text.secondary" sx={{ 
-                  bgcolor: 'background.paper', 
-                  px: 2, 
-                  py: 0.5, 
-                  borderRadius: 1,
-                  border: 1,
-                  borderColor: 'divider'
-                }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{
+                    bgcolor: 'background.paper',
+                    px: 2,
+                    py: 0.5,
+                    borderRadius: 1,
+                    border: 1,
+                    borderColor: 'divider',
+                  }}
+                >
                   {date}
                 </Typography>
               </Box>
@@ -210,16 +204,14 @@ const Conversation: React.FC<ConversationProps> = ({ phoneNumber, onBack }) => {
                       borderTopLeftRadius: message.direction === 'inbound' ? 0.5 : 2,
                     }}
                   >
-                    <Typography variant="body2">
-                      {message.body}
-                    </Typography>
-                    <Typography 
-                      variant="caption" 
-                      sx={{ 
-                        opacity: 0.7, 
-                        display: 'block', 
-                        textAlign: 'right', 
-                        mt: 0.5 
+                    <Typography variant="body2">{message.body}</Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        opacity: 0.7,
+                        display: 'block',
+                        textAlign: 'right',
+                        mt: 0.5,
                       }}
                     >
                       {formatTime(message.created_at)}
@@ -234,13 +226,16 @@ const Conversation: React.FC<ConversationProps> = ({ phoneNumber, onBack }) => {
       </Box>
 
       {/* Message Input */}
-      <Paper sx={{
-        p: 2,
-        borderRadius: 0,
-        flexShrink: 0,
-        borderTop: 1,
-        borderColor: 'divider'
-      }} elevation={3}>
+      <Paper
+        sx={{
+          p: 2,
+          borderRadius: 0,
+          flexShrink: 0,
+          borderTop: 1,
+          borderColor: 'divider',
+        }}
+        elevation={3}
+      >
         <Box sx={{ display: 'flex', gap: 1 }}>
           <TextField
             fullWidth
@@ -251,24 +246,19 @@ const Conversation: React.FC<ConversationProps> = ({ phoneNumber, onBack }) => {
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
+                e.preventDefault()
+                handleSendMessage()
               }
             }}
             disabled={sending}
           />
-          <Button
-            variant="contained"
-            onClick={handleSendMessage}
-            disabled={!newMessage.trim() || sending}
-            sx={{ minWidth: 56, height: 56 }}
-          >
+          <Button variant="contained" onClick={handleSendMessage} disabled={!newMessage.trim() || sending} sx={{ minWidth: 56, height: 56 }}>
             <Send />
           </Button>
         </Box>
       </Paper>
     </Box>
-  );
-};
+  )
+}
 
-export default Conversation;
+export default Conversation

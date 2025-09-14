@@ -1,67 +1,69 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const compression = require('compression');
-const morgan = require('morgan');
-const path = require('path');
-const rateLimit = require('express-rate-limit');
-require('dotenv').config();
+const express = require('express')
+const cors = require('cors')
+const helmet = require('helmet')
+const compression = require('compression')
+const morgan = require('morgan')
+const path = require('path')
+const rateLimit = require('express-rate-limit')
+require('dotenv').config()
 
-const authRoutes = require('./routes/auth');
-const voiceRoutes = require('./routes/voice');
-const smsRoutes = require('./routes/sms');
-const webhookRoutes = require('./routes/webhooks');
-const { errorHandler } = require('./middleware/errorHandler');
-const { authenticateToken } = require('./middleware/auth');
-const apiKeyService = require('./services/apiKeyService');
+const authRoutes = require('./routes/auth')
+const voiceRoutes = require('./routes/voice')
+const smsRoutes = require('./routes/sms')
+const webhookRoutes = require('./routes/webhooks')
+const { errorHandler } = require('./middleware/errorHandler')
+const { authenticateToken } = require('./middleware/auth')
+const apiKeyService = require('./services/apiKeyService')
 
-const app = express();
-const PORT = process.env.PORT || 3001;
+const app = express()
+const PORT = process.env.PORT || 3001
 
 // Trust proxy for rate limiting
-app.set('trust proxy', 1);
+app.set('trust proxy', 1)
 
 // Basic security with permissive CSP for Twilio
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https:", "http:"],
-      connectSrc: ["'self'", "https:", "http:", "ws:", "wss:"],
-      mediaSrc: ["'self'", "https:", "http:", "blob:", "data:"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https:", "http:"],
-      fontSrc: ["'self'", "https:", "http:", "data:"],
-      imgSrc: ["'self'", "https:", "http:", "data:", "blob:"],
-      frameSrc: ["'self'", "https:", "http:"],
-      objectSrc: ["'none'"]
-    }
-  }
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https:', 'http:'],
+        connectSrc: ["'self'", 'https:', 'http:', 'ws:', 'wss:'],
+        mediaSrc: ["'self'", 'https:', 'http:', 'blob:', 'data:'],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https:', 'http:'],
+        fontSrc: ["'self'", 'https:', 'http:', 'data:'],
+        imgSrc: ["'self'", 'https:', 'http:', 'data:', 'blob:'],
+        frameSrc: ["'self'", 'https:', 'http:'],
+        objectSrc: ["'none'"],
+      },
+    },
+  }),
+)
 
 // Simple rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100,
   message: 'Too many requests, please try again later.',
-});
-app.use('/api/', limiter);
+})
+app.use('/api/', limiter)
 
 // Simple CORS
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? process.env.APP_URL
-    : ['http://localhost:3000', 'http://localhost:3001'],
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: process.env.NODE_ENV === 'production' ? process.env.APP_URL : ['http://localhost:3000', 'http://localhost:3001'],
+    credentials: true,
+  }),
+)
 
 // Basic middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(compression());
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+app.use(compression())
 
 // Simple logging
 if (process.env.NODE_ENV !== 'test') {
-  app.use(morgan('combined'));
+  app.use(morgan('combined'))
 }
 
 // Health check endpoint
@@ -69,64 +71,64 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
-    version: process.env.npm_package_version || '1.0.0'
-  });
-});
+    version: process.env.npm_package_version || '1.0.0',
+  })
+})
 
 // API routes
-app.use('/api/auth', authRoutes);
-app.use('/api/voice', authenticateToken, voiceRoutes);
-app.use('/api/sms', authenticateToken, smsRoutes);
-app.use('/webhooks', webhookRoutes); // Webhooks don't need auth token
+app.use('/api/auth', authRoutes)
+app.use('/api/voice', authenticateToken, voiceRoutes)
+app.use('/api/sms', authenticateToken, smsRoutes)
+app.use('/webhooks', webhookRoutes) // Webhooks don't need auth token
 
 // Serve static files from React build in production
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
-  
+  app.use(express.static(path.join(__dirname, '../client/build')))
+
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build/index.html'));
-  });
+    res.sendFile(path.join(__dirname, '../client/build/index.html'))
+  })
 }
 
 // Error handling middleware
-app.use(errorHandler);
+app.use(errorHandler)
 
 // Server startup
 async function startServer() {
   try {
     // Initialize API key service on startup
     if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-      console.log('Initializing API key service...');
-      await apiKeyService.initialize();
+      console.log('Initializing API key service...')
+      await apiKeyService.initialize()
     }
 
     app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-      console.log(`Environment: ${process.env.NODE_ENV}`);
+      console.log(`Server running on port ${PORT}`)
+      console.log(`Environment: ${process.env.NODE_ENV}`)
       if (process.env.NODE_ENV === 'development') {
-        console.log(`API available at: http://localhost:${PORT}/api`);
-        console.log(`Health check: http://localhost:${PORT}/health`);
+        console.log(`API available at: http://localhost:${PORT}/api`)
+        console.log(`Health check: http://localhost:${PORT}/health`)
       }
-    });
+    })
   } catch (error) {
-    console.error('Unable to start server:', error);
-    process.exit(1);
+    console.error('Unable to start server:', error)
+    process.exit(1)
   }
 }
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  process.exit(0);
-});
+  console.log('SIGTERM received, shutting down gracefully')
+  process.exit(0)
+})
 
 process.on('SIGINT', async () => {
-  console.log('SIGINT received, shutting down gracefully');
-  process.exit(0);
-});
+  console.log('SIGINT received, shutting down gracefully')
+  process.exit(0)
+})
 
 if (require.main === module) {
-  startServer();
+  startServer()
 }
 
-module.exports = app;
+module.exports = app

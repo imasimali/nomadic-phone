@@ -1,56 +1,45 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Button,
-  Typography,
-  Alert,
-  Container,
-  InputAdornment,
-  IconButton,
-} from '@mui/material';
-import { Visibility, VisibilityOff, Phone } from '@mui/icons-material';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Box, Card, CardContent, TextField, Button, Typography, Alert, Container, InputAdornment, IconButton } from '@mui/material'
+import { Visibility, VisibilityOff, Phone } from '@mui/icons-material'
+import { useAuth } from '../../contexts/AuthContext'
 
 const Login: React.FC = () => {
-  const navigate = useNavigate();
-  const { login } = useAuth();
+  const navigate = useNavigate()
+  const { login } = useAuth()
   const [formData, setFormData] = useState({
     password: '',
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  })
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
-    });
-    setError('');
-  };
+    })
+    setError('')
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
+    e.preventDefault()
+    setIsLoading(true)
+    setError('')
 
     try {
-      await login(formData.password);
-      navigate('/');
+      await login(formData.password)
+      navigate('/')
     } catch (error: any) {
-      setError(error.message);
+      setError(error.message)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+    setShowPassword(!showPassword)
+  }
 
   return (
     <Container component="main" maxWidth="sm">
@@ -97,11 +86,7 @@ const Login: React.FC = () => {
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton
-                        aria-label="toggle password visibility"
-                        onClick={togglePasswordVisibility}
-                        edge="end"
-                      >
+                      <IconButton aria-label="toggle password visibility" onClick={togglePasswordVisibility} edge="end">
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
@@ -109,14 +94,7 @@ const Login: React.FC = () => {
                 }}
               />
 
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                size="large"
-                disabled={isLoading}
-                sx={{ mt: 3, mb: 2, py: 1.5 }}
-              >
+              <Button type="submit" fullWidth variant="contained" size="large" disabled={isLoading} sx={{ mt: 3, mb: 2, py: 1.5 }}>
                 {isLoading ? 'Signing In...' : 'Sign In'}
               </Button>
 
@@ -136,7 +114,7 @@ const Login: React.FC = () => {
         </Box>
       </Box>
     </Container>
-  );
-};
+  )
+}
 
-export default Login;
+export default Login

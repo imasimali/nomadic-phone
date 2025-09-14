@@ -1,4 +1,4 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
   appId: 'com.nomadicphone.app',
@@ -10,7 +10,7 @@ const config: CapacitorConfig = {
 
     // For local development, uncomment:
     url: 'http://localhost:3000',
-    cleartext: true
+    cleartext: true,
   },
   plugins: {
     SplashScreen: {
@@ -18,31 +18,31 @@ const config: CapacitorConfig = {
       backgroundColor: '#2c5aa0',
       showSpinner: false,
       androidSplashResourceName: 'splash',
-      iosSplashResourceName: 'Default'
+      iosSplashResourceName: 'Default',
     },
     StatusBar: {
       style: 'DARK',
       backgroundColor: '#2c5aa0',
-      overlaysWebView: false
+      overlaysWebView: false,
     },
     CapacitorHttp: {
-      enabled: true
+      enabled: true,
     },
     Keyboard: {
       resize: 'body',
       style: 'DARK',
-      resizeOnFullScreen: true
-    }
+      resizeOnFullScreen: true,
+    },
   },
   ios: {
     contentInset: 'automatic',
-    scrollEnabled: true
+    scrollEnabled: true,
   },
   android: {
     allowMixedContent: true,
     captureInput: true,
-    webContentsDebuggingEnabled: false
-  }
-};
+    webContentsDebuggingEnabled: false,
+  },
+}
 
-export default config;
+export default config

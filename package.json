@@ -2,6 +2,7 @@
   "name": "nomadic-phone",
   "version": "1.0.0",
   "description": "A simple web-based phone system built with Node.js, React, and Twilio APIs",
+  "type": "module",
   "main": "server/index.js",
   "scripts": {
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
@@ -11,7 +12,11 @@
     "start": "node server/index.js",
     "install:all": "npm install && cd client && npm install",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "lint": "eslint server/ --ext .js && cd client && npm run build",
+    "lint:fix": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\" \"client/src/**/*.{js,jsx,ts,tsx,css}\" && eslint server/ --ext .js --fix",
+    "check": "npm run format:all && npm run lint:all",
+    "fix": "npm run format:all && npm run lint:fix && cd client && npm run lint:build"
   },
   "keywords": [
     "twilio",
@@ -23,8 +28,7 @@
     "react",
     "nodejs"
   ],
-  "author": "Nomadic Phone Modern",
-  "license": "MIT",
+  "author": "Asim Ali",
   "dependencies": {
     "axios": "^1.11.0",
     "compression": "^1.7.4",
@@ -41,8 +45,12 @@
   "devDependencies": {
     "@types/jest": "^29.5.8",
     "concurrently": "^8.2.2",
+    "eslint": "^9.35.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
     "jest": "^29.7.0",
     "nodemon": "^3.0.2",
+    "prettier": "^3.6.2",
     "supertest": "^6.3.3"
   },
   "engines": {

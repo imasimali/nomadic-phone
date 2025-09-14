@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+client/node_modules/
+
+# Build outputs
+build/
+dist/
+client/build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Package files
+package-lock.json
+client/package-lock.json
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Capacitor
+client/android/
+client/ios/
+client/resources/
+
+# Coverage
+coverage/

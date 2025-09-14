@@ -1,56 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Alert,
-  Button,
-  Avatar,
-  Chip,
-} from '@mui/material';
-import {
-  Message,
-  Phone,
-  Refresh,
-  Send,
-} from '@mui/icons-material';
-import { smsAPI, SMS } from '../../services/api';
-import Conversation from './Conversation';
+import React, { useState, useEffect } from 'react'
+import { Box, Card, CardContent, Typography, List, ListItem, ListItemIcon, ListItemText, Alert, Button, Avatar, Chip } from '@mui/material'
+import { Message, Phone, Refresh, Send } from '@mui/icons-material'
+import { smsAPI, SMS } from '../../services/api'
+import Conversation from './Conversation'
 
 interface ChatConversation {
-  phoneNumber: string;
-  lastMessage: string;
-  lastMessageTime: string;
-  messageCount: number;
-  direction: 'inbound' | 'outbound';
+  phoneNumber: string
+  lastMessage: string
+  lastMessageTime: string
+  messageCount: number
+  direction: 'inbound' | 'outbound'
 }
 
 const Chat: React.FC = () => {
-  const [conversations, setConversations] = useState<ChatConversation[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<ChatConversation[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
 
   useEffect(() => {
-    loadConversations();
-  }, []);
+    loadConversations()
+  }, [])
 
   const loadConversations = async () => {
     try {
-      setLoading(true);
-      setError('');
-      const response = await smsAPI.getMessages({ limit: 100 });
-      
-      // Group messages by phone number to create conversations
-      const conversationMap = new Map<string, ChatConversation>();
+      setLoading(true)
+      setError('')
+      const response = await smsAPI.getMessages({ limit: 100 })
 
-      (response.data.messages || []).forEach((message: SMS) => {
-        const otherNumber = message.direction === 'outbound' ? message.to_number : message.from_number;
+      // Group messages by phone number to create conversations
+      const conversationMap = new Map<string, ChatConversation>()
+
+      ;(response.data.messages || []).forEach((message: SMS) => {
+        const otherNumber = message.direction === 'outbound' ? message.to_number : message.from_number
 
         if (!conversationMap.has(otherNumber)) {
           conversationMap.set(otherNumber, {
@@ -59,68 +41,63 @@ const Chat: React.FC = () => {
             lastMessageTime: message.created_at,
             messageCount: 1,
             direction: message.direction,
-          });
+          })
         } else {
-          const existing = conversationMap.get(otherNumber)!;
+          const existing = conversationMap.get(otherNumber)!
           // Update if this message is more recent
           if (new Date(message.created_at) > new Date(existing.lastMessageTime)) {
-            existing.lastMessage = message.body;
-            existing.lastMessageTime = message.created_at;
-            existing.direction = message.direction;
+            existing.lastMessage = message.body
+            existing.lastMessageTime = message.created_at
+            existing.direction = message.direction
           }
-          existing.messageCount += 1;
+          existing.messageCount += 1
         }
-      });
+      })
 
       // Convert to array and sort by most recent
-      const conversationList = Array.from(conversationMap.values())
-        .sort((a, b) => new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime());
+      const conversationList = Array.from(conversationMap.values()).sort((a, b) => new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime())
 
-      setConversations(conversationList);
+      setConversations(conversationList)
     } catch (error: any) {
-      setError(error.response?.data?.error || 'Failed to load conversations');
+      setError(error.response?.data?.error || 'Failed to load conversations')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const formatPhoneNumber = (number: string) => {
-    const cleaned = number.replace(/\D/g, '');
+    const cleaned = number.replace(/\D/g, '')
     if (cleaned.length === 11 && cleaned.startsWith('1')) {
-      return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
+      return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`
     }
-    return number;
-  };
+    return number
+  }
 
   const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
 
     if (diffInHours < 1) {
-      return 'Just now';
+      return 'Just now'
     } else if (diffInHours < 24) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else if (diffInHours < 168) { // 7 days
-      return date.toLocaleDateString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    } else if (diffInHours < 168) {
+      // 7 days
+      return date.toLocaleDateString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' })
     } else {
-      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric' })
     }
-  };
+  }
 
   const truncateMessage = (message: string, maxLength: number = 50) => {
-    if (message.length <= maxLength) return message;
-    return message.substring(0, maxLength) + '...';
-  };
+    if (message.length <= maxLength) return message
+    return message.substring(0, maxLength) + '...'
+  }
 
   // Show individual conversation if selected
   if (selectedConversation) {
-    return (
-      <Conversation
-        phoneNumber={selectedConversation}
-        onBack={() => setSelectedConversation(null)}
-      />
-    );
+    return <Conversation phoneNumber={selectedConversation} onBack={() => setSelectedConversation(null)} />
   }
 
   return (
@@ -134,16 +111,8 @@ const Chat: React.FC = () => {
 
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">
-          Conversations
-        </Typography>
-        <Button
-          variant="outlined"
-          startIcon={<Refresh />}
-          onClick={loadConversations}
-          disabled={loading}
-          size="small"
-        >
+        <Typography variant="h6">Conversations</Typography>
+        <Button variant="outlined" startIcon={<Refresh />} onClick={loadConversations} disabled={loading} size="small">
           Refresh
         </Button>
       </Box>
@@ -186,12 +155,7 @@ const Chat: React.FC = () => {
                           {formatPhoneNumber(conversation.phoneNumber)}
                         </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Chip
-                            size="small"
-                            label={conversation.messageCount}
-                            color="primary"
-                            variant="outlined"
-                          />
+                          <Chip size="small" label={conversation.messageCount} color="primary" variant="outlined" />
                           <Typography variant="caption" color="text.secondary" component="span">
                             {formatTime(conversation.lastMessageTime)}
                           </Typography>
@@ -220,7 +184,7 @@ const Chat: React.FC = () => {
         </CardContent>
       </Card>
     </Box>
-  );
-};
+  )
+}
 
-export default Chat;
+export default Chat

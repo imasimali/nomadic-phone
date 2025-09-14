@@ -1,33 +1,33 @@
-const twilio = require('twilio');
+const twilio = require('twilio')
 
 class TwilioService {
   constructor() {
-    this.client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-    this.phoneNumber = process.env.TWILIO_PHONE_NUMBER;
+    this.client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+    this.phoneNumber = process.env.TWILIO_PHONE_NUMBER
   }
 
   // Call-related methods
   async getCalls(options = {}) {
-    const { limit = 20, direction } = options;
+    const { limit = 20, direction } = options
 
     try {
       const twilioOptions = {
         limit: Math.min(limit, 50), // Keep it simple
-      };
+      }
 
       // Add filters if provided
       if (this.phoneNumber) {
         if (direction === 'inbound') {
-          twilioOptions.to = this.phoneNumber;
+          twilioOptions.to = this.phoneNumber
         } else if (direction === 'outbound') {
-          twilioOptions.from = this.phoneNumber;
+          twilioOptions.from = this.phoneNumber
         }
       }
 
-      const calls = await this.client.calls.list(twilioOptions);
+      const calls = await this.client.calls.list(twilioOptions)
 
       // Simple transformation
-      const transformedCalls = calls.map(call => ({
+      const transformedCalls = calls.map((call) => ({
         id: call.sid,
         call_sid: call.sid,
         from_number: call.from,
@@ -38,11 +38,11 @@ class TwilioService {
         start_time: call.startTime,
         end_time: call.endTime,
         created_at: call.dateCreated,
-        updated_at: call.dateUpdated
-      }));
+        updated_at: call.dateUpdated,
+      }))
 
       // Sort by creation date (newest first)
-      transformedCalls.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      transformedCalls.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
       return {
         calls: transformedCalls,
@@ -50,19 +50,18 @@ class TwilioService {
           page: 1,
           limit: transformedCalls.length,
           total: transformedCalls.length,
-          pages: 1
-        }
-      };
-
+          pages: 1,
+        },
+      }
     } catch (error) {
-      console.error('Error fetching calls from Twilio:', error);
-      throw new Error(`Failed to fetch calls: ${error.message}`);
+      console.error('Error fetching calls from Twilio:', error)
+      throw new Error(`Failed to fetch calls: ${error.message}`)
     }
   }
 
   async getCall(callSid) {
     try {
-      const call = await this.client.calls(callSid).fetch();
+      const call = await this.client.calls(callSid).fetch()
 
       return {
         id: call.sid,
@@ -75,16 +74,13 @@ class TwilioService {
         start_time: call.startTime,
         end_time: call.endTime,
         created_at: call.dateCreated,
-        updated_at: call.dateUpdated
-      };
-
+        updated_at: call.dateUpdated,
+      }
     } catch (error) {
-      console.error('Error fetching call from Twilio:', error);
-      throw new Error(`Failed to fetch call: ${error.message}`);
+      console.error('Error fetching call from Twilio:', error)
+      throw new Error(`Failed to fetch call: ${error.message}`)
     }
   }
-
-
 
   // Make a call
   async makeCall(to) {
@@ -98,48 +94,48 @@ class TwilioService {
         statusCallbackMethod: 'POST',
         record: true,
         recordingStatusCallback: `${process.env.WEBHOOK_BASE_URL}/webhooks/voice/recording`,
-      });
+      })
 
       return {
         callSid: call.sid,
         status: call.status,
         to: call.to,
-        from: call.from
-      };
+        from: call.from,
+      }
     } catch (error) {
-      console.error('Error making call:', error);
-      throw new Error(`Failed to make call: ${error.message}`);
+      console.error('Error making call:', error)
+      throw new Error(`Failed to make call: ${error.message}`)
     }
   }
 
   // Hangup a call
   async hangupCall(callSid) {
     try {
-      await this.client.calls(callSid).update({ status: 'completed' });
-      return { success: true };
+      await this.client.calls(callSid).update({ status: 'completed' })
+      return { success: true }
     } catch (error) {
-      console.error('Error hanging up call:', error);
-      throw new Error(`Failed to hangup call: ${error.message}`);
+      console.error('Error hanging up call:', error)
+      throw new Error(`Failed to hangup call: ${error.message}`)
     }
   }
 
   // Get all recordings
   async getRecordings(options = {}) {
-    const { limit = 20 } = options;
+    const { limit = 20 } = options
 
     try {
       const twilioOptions = {
         limit: Math.min(limit, 50),
-      };
+      }
 
-      const recordings = await this.client.recordings.list(twilioOptions);
+      const recordings = await this.client.recordings.list(twilioOptions)
 
       // For each recording, fetch the associated call details
       const recordingsWithCallDetails = await Promise.all(
         recordings.map(async (recording) => {
           try {
             // Fetch call details for this recording
-            const call = await this.client.calls(recording.callSid).fetch();
+            const call = await this.client.calls(recording.callSid).fetch()
 
             return {
               id: recording.sid,
@@ -161,10 +157,10 @@ class TwilioService {
               call_status: call.status,
               call_duration: call.duration ? parseInt(call.duration) : null,
               start_time: call.startTime,
-              end_time: call.endTime
-            };
+              end_time: call.endTime,
+            }
           } catch (callError) {
-            console.warn(`Could not fetch call details for recording ${recording.sid}:`, callError.message);
+            console.warn(`Could not fetch call details for recording ${recording.sid}:`, callError.message)
             // Return recording without call details if call fetch fails
             return {
               id: recording.sid,
@@ -186,14 +182,14 @@ class TwilioService {
               call_status: 'unknown',
               call_duration: null,
               start_time: null,
-              end_time: null
-            };
+              end_time: null,
+            }
           }
-        })
-      );
+        }),
+      )
 
       // Sort by creation date (newest first)
-      recordingsWithCallDetails.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      recordingsWithCallDetails.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
       return {
         recordings: recordingsWithCallDetails,
@@ -201,20 +197,19 @@ class TwilioService {
           page: 1,
           limit: recordingsWithCallDetails.length,
           total: recordingsWithCallDetails.length,
-          pages: 1
-        }
-      };
-
+          pages: 1,
+        },
+      }
     } catch (error) {
-      console.error('Error fetching recordings from Twilio:', error);
-      throw new Error(`Failed to fetch recordings: ${error.message}`);
+      console.error('Error fetching recordings from Twilio:', error)
+      throw new Error(`Failed to fetch recordings: ${error.message}`)
     }
   }
 
   // Get a specific recording
   async getRecording(recordingSid) {
     try {
-      const recording = await this.client.recordings(recordingSid).fetch();
+      const recording = await this.client.recordings(recordingSid).fetch()
 
       const transformedRecording = {
         sid: recording.sid,
@@ -223,59 +218,58 @@ class TwilioService {
         status: recording.status,
         uri: recording.uri,
         date_created: recording.dateCreated,
-        date_updated: recording.dateUpdated
-      };
+        date_updated: recording.dateUpdated,
+      }
 
-      return transformedRecording;
-
+      return transformedRecording
     } catch (error) {
-      console.error('Error fetching recording from Twilio:', error);
-      throw new Error(`Failed to fetch recording: ${error.message}`);
+      console.error('Error fetching recording from Twilio:', error)
+      throw new Error(`Failed to fetch recording: ${error.message}`)
     }
   }
 
   // SMS-related methods
   async getMessages(options = {}) {
-    const { limit = 20, direction } = options;
+    const { limit = 20, direction } = options
 
     try {
       const twilioOptions = {
         limit: Math.min(limit, 50),
-      };
+      }
 
       // Always filter by our phone number to ensure we only get messages to/from our number
       if (this.phoneNumber) {
         if (direction === 'inbound') {
-          twilioOptions.to = this.phoneNumber;
+          twilioOptions.to = this.phoneNumber
         } else if (direction === 'outbound') {
-          twilioOptions.from = this.phoneNumber;
+          twilioOptions.from = this.phoneNumber
         } else {
           // When no direction is specified, we need to get both inbound and outbound
           // We'll fetch both and combine them
         }
       }
 
-      let messages;
+      let messages
       if (!direction && this.phoneNumber) {
         // Fetch both inbound and outbound messages separately
         const [inboundMessages, outboundMessages] = await Promise.all([
           this.client.messages.list({ ...twilioOptions, to: this.phoneNumber }),
-          this.client.messages.list({ ...twilioOptions, from: this.phoneNumber })
-        ]);
-        messages = [...inboundMessages, ...outboundMessages];
+          this.client.messages.list({ ...twilioOptions, from: this.phoneNumber }),
+        ])
+        messages = [...inboundMessages, ...outboundMessages]
       } else {
-        messages = await this.client.messages.list(twilioOptions);
+        messages = await this.client.messages.list(twilioOptions)
       }
 
       // Transform messages and ensure correct direction
-      const transformedMessages = messages.map(message => {
+      const transformedMessages = messages.map((message) => {
         // Determine direction based on our phone number
-        let messageDirection = message.direction;
+        let messageDirection = message.direction
         if (this.phoneNumber) {
           if (message.from === this.phoneNumber) {
-            messageDirection = 'outbound';
+            messageDirection = 'outbound'
           } else if (message.to === this.phoneNumber) {
-            messageDirection = 'inbound';
+            messageDirection = 'inbound'
           }
         }
 
@@ -288,20 +282,20 @@ class TwilioService {
           body: message.body,
           status: message.status,
           created_at: message.dateCreated,
-          updated_at: message.dateUpdated
-        };
-      });
+          updated_at: message.dateUpdated,
+        }
+      })
 
       // Remove duplicates (in case a message appears in both inbound and outbound lists)
       const uniqueMessages = transformedMessages.reduce((acc, message) => {
-        if (!acc.find(m => m.message_sid === message.message_sid)) {
-          acc.push(message);
+        if (!acc.find((m) => m.message_sid === message.message_sid)) {
+          acc.push(message)
         }
-        return acc;
-      }, []);
+        return acc
+      }, [])
 
       // Sort by creation date (newest first)
-      uniqueMessages.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      uniqueMessages.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
       return {
         messages: uniqueMessages,
@@ -309,13 +303,12 @@ class TwilioService {
           page: 1,
           limit: uniqueMessages.length,
           total: uniqueMessages.length,
-          pages: 1
-        }
-      };
-
+          pages: 1,
+        },
+      }
     } catch (error) {
-      console.error('Error fetching messages from Twilio:', error);
-      throw new Error(`Failed to fetch messages: ${error.message}`);
+      console.error('Error fetching messages from Twilio:', error)
+      throw new Error(`Failed to fetch messages: ${error.message}`)
     }
   }
 
@@ -326,29 +319,29 @@ class TwilioService {
         to,
         from: this.phoneNumber,
         body,
-      };
-
-      if (mediaUrls && mediaUrls.length > 0) {
-        messageData.mediaUrl = mediaUrls;
       }
 
-      const message = await this.client.messages.create(messageData);
+      if (mediaUrls && mediaUrls.length > 0) {
+        messageData.mediaUrl = mediaUrls
+      }
+
+      const message = await this.client.messages.create(messageData)
 
       return {
         messageSid: message.sid,
         status: message.status,
         to: message.to,
         from: message.from,
-        body: message.body
-      };
+        body: message.body,
+      }
     } catch (error) {
-      console.error('Error sending SMS:', error);
-      throw new Error(`Failed to send SMS: ${error.message}`);
+      console.error('Error sending SMS:', error)
+      throw new Error(`Failed to send SMS: ${error.message}`)
     }
   }
 }
 
 // Create singleton instance
-const twilioService = new TwilioService();
+const twilioService = new TwilioService()
 
-module.exports = twilioService;
+module.exports = twilioService
