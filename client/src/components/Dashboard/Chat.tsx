@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Box, Card, CardContent, Typography, List, ListItem, ListItemIcon, ListItemText, Alert, Button, Avatar, Chip } from '@mui/material'
+import { Box, Card, CardContent, Typography, List, ListItem, ListItemIcon, ListItemText, Alert, Avatar, Chip, IconButton, Tooltip, Button } from '@mui/material'
 import { Message, Refresh, Send } from '@mui/icons-material'
 import { smsAPI, SMS } from '../../services/api'
 import Conversation from './Conversation'
@@ -114,13 +114,37 @@ const Chat: React.FC = () => {
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6">Conversations</Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button variant="contained" startIcon={<Send />} onClick={() => setSmsModalOpen(true)} size="small">
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <Button
+            variant="contained"
+            startIcon={<Send />}
+            onClick={() => setSmsModalOpen(true)}
+            size="small"
+            sx={{
+              minHeight: 32,
+              fontSize: '0.8rem',
+              px: 2,
+              py: 0.5
+            }}
+          >
             New Message
           </Button>
-          <Button variant="outlined" startIcon={<Refresh />} onClick={loadConversations} disabled={loading} size="small">
-            Refresh
-          </Button>
+          <Tooltip title="Refresh">
+            <IconButton
+              onClick={loadConversations}
+              disabled={loading}
+              sx={{
+                border: 1,
+                borderColor: 'primary.main',
+                color: 'primary.main',
+                '&:hover': { bgcolor: 'primary.light', opacity: 0.1 },
+                width: 32,
+                height: 32
+              }}
+            >
+              <Refresh sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
         </Box>
       </Box>
 
