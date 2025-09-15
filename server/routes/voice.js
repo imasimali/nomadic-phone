@@ -186,7 +186,6 @@ router.get(
     const settings = {
       redirect_number: process.env.REDIRECT_NUMBER || '',
       voice_message: process.env.VOICE_MESSAGE || "Hello, you've reached my voicemail. Please leave a message after the beep and press star to finish.",
-      voice_language: process.env.VOICE_LANGUAGE || 'en-US',
       push_notifications: !!(process.env.PUSHOVER_USER_KEY && process.env.PUSHOVER_API_TOKEN),
     }
 
@@ -200,9 +199,12 @@ router.put(
   [
     body('redirect_number')
       .optional()
-      .matches(/^\+[1-9]\d{1,14}$/)
-      .withMessage('Valid phone number in E.164 format required'),
-    body('voice_language').optional().isLength({ min: 2, max: 10 }).withMessage('Valid language code required'),
+      .custom((value) => {
+        if (value && !value.match(/^\+[1-9]\d{1,14}$/)) {
+          throw new Error('Valid phone number in E.164 format required')
+        }
+        return true
+      }),
     body('voice_message').optional().isLength({ min: 1, max: 500 }).withMessage('Voice message must be 1-500 characters'),
   ],
   asyncHandler(async (req, res) => {
@@ -224,7 +226,6 @@ router.put(
       current_settings: {
         redirect_number: process.env.REDIRECT_NUMBER || '',
         voice_message: process.env.VOICE_MESSAGE || "Hello, you've reached my voicemail. Please leave a message after the beep and press star to finish.",
-        voice_language: process.env.VOICE_LANGUAGE || 'en-US',
         push_notifications: !!(process.env.PUSHOVER_USER_KEY && process.env.PUSHOVER_API_TOKEN),
       },
     })

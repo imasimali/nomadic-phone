@@ -5,10 +5,6 @@ import {
   CardContent,
   Typography,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Button,
   Grid,
   Alert,
@@ -19,7 +15,7 @@ import {
   ListItemText,
   Chip,
 } from '@mui/material'
-import { Save, Refresh, Phone, Voicemail, Info, CheckCircle, Warning } from '@mui/icons-material'
+import { Save, Refresh, Phone, Info, CheckCircle, Warning } from '@mui/icons-material'
 import { voiceAPI, VoiceSettings } from '../../services/api'
 import LoadingScreen from '../Common/LoadingScreen'
 import { usePageTitle } from '../../hooks/usePageTitle'
@@ -28,9 +24,7 @@ const Settings: React.FC = () => {
   usePageTitle('Settings')
 
   const [settings, setSettings] = useState<VoiceSettings>({
-    incoming_call_action: 'recording',
     redirect_number: '',
-    voice_language: 'en-US',
     voice_message: '',
   })
   const [loading, setLoading] = useState(true)
@@ -67,11 +61,6 @@ const Settings: React.FC = () => {
       setSuccess('')
 
       // Validate settings
-      if (settings.incoming_call_action === 'redirect' && !settings.redirect_number) {
-        setError('Redirect number is required when using redirect action')
-        return
-      }
-
       if (settings.voice_message.length > 500) {
         setError('Voice message must be 500 characters or less')
         return
@@ -103,35 +92,7 @@ const Settings: React.FC = () => {
     return JSON.stringify(settings) !== JSON.stringify(originalSettings)
   }
 
-  const getActionDescription = (action: string) => {
-    switch (action) {
-      case 'recording':
-        return 'Incoming calls go directly to voicemail'
-      case 'client':
-        return 'Incoming calls ring in your browser'
-      case 'redirect':
-        return 'Incoming calls are forwarded to another number'
-      default:
-        return ''
-    }
-  }
 
-  const getLanguageLabel = (code: string) => {
-    const languages: { [key: string]: string } = {
-      'en-US': 'English (US)',
-      'en-GB': 'English (UK)',
-      'es-ES': 'Spanish (Spain)',
-      'es-MX': 'Spanish (Mexico)',
-      'fr-FR': 'French',
-      'de-DE': 'German',
-      'it-IT': 'Italian',
-      'pt-BR': 'Portuguese (Brazil)',
-      'ja-JP': 'Japanese',
-      'ko-KR': 'Korean',
-      'zh-CN': 'Chinese (Simplified)',
-    }
-    return languages[code] || code
-  }
 
   if (loading) {
     return <LoadingScreen />
@@ -162,95 +123,29 @@ const Settings: React.FC = () => {
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                 <Phone sx={{ mr: 1, color: 'primary.main' }} />
-                <Typography variant="h6">Voice Settings</Typography>
+                <Typography variant="h6">Call Handling</Typography>
               </Box>
 
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Configure call handling settings. If no redirect number is set, calls will ring in your browser and go to voicemail if unanswered.
+              </Typography>
+
               <Grid container spacing={3}>
-                {/* Incoming Call Action */}
-                <Grid item xs={12}>
-                  <FormControl fullWidth>
-                    <InputLabel>Incoming Call Action</InputLabel>
-                    <Select
-                      value={settings.incoming_call_action}
-                      label="Incoming Call Action"
-                      onChange={(e) =>
-                        setSettings({
-                          ...settings,
-                          incoming_call_action: e.target.value as 'recording' | 'client' | 'redirect',
-                        })
-                      }
-                    >
-                      <MenuItem value="recording">
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Voicemail sx={{ mr: 1 }} />
-                          Voicemail
-                        </Box>
-                      </MenuItem>
-                      <MenuItem value="client">
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Phone sx={{ mr: 1 }} />
-                          Ring Browser
-                        </Box>
-                      </MenuItem>
-                      <MenuItem value="redirect">
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Phone sx={{ mr: 1 }} />
-                          Forward to Number
-                        </Box>
-                      </MenuItem>
-                    </Select>
-                  </FormControl>
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                    {getActionDescription(settings.incoming_call_action)}
-                  </Typography>
-                </Grid>
-
                 {/* Redirect Number */}
-                {settings.incoming_call_action === 'redirect' && (
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Redirect Phone Number"
-                      placeholder="+1234567890"
-                      value={settings.redirect_number || ''}
-                      onChange={(e) =>
-                        setSettings({
-                          ...settings,
-                          redirect_number: e.target.value,
-                        })
-                      }
-                      helperText="Enter phone number in E.164 format (e.g., +1234567890)"
-                    />
-                  </Grid>
-                )}
-
-                {/* Voice Language */}
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>Voice Language</InputLabel>
-                    <Select
-                      value={settings.voice_language}
-                      label="Voice Language"
-                      onChange={(e) =>
-                        setSettings({
-                          ...settings,
-                          voice_language: e.target.value,
-                        })
-                      }
-                    >
-                      <MenuItem value="en-US">{getLanguageLabel('en-US')}</MenuItem>
-                      <MenuItem value="en-GB">{getLanguageLabel('en-GB')}</MenuItem>
-                      <MenuItem value="es-ES">{getLanguageLabel('es-ES')}</MenuItem>
-                      <MenuItem value="es-MX">{getLanguageLabel('es-MX')}</MenuItem>
-                      <MenuItem value="fr-FR">{getLanguageLabel('fr-FR')}</MenuItem>
-                      <MenuItem value="de-DE">{getLanguageLabel('de-DE')}</MenuItem>
-                      <MenuItem value="it-IT">{getLanguageLabel('it-IT')}</MenuItem>
-                      <MenuItem value="pt-BR">{getLanguageLabel('pt-BR')}</MenuItem>
-                      <MenuItem value="ja-JP">{getLanguageLabel('ja-JP')}</MenuItem>
-                      <MenuItem value="ko-KR">{getLanguageLabel('ko-KR')}</MenuItem>
-                      <MenuItem value="zh-CN">{getLanguageLabel('zh-CN')}</MenuItem>
-                    </Select>
-                  </FormControl>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Redirect Phone Number (Optional)"
+                    placeholder="+1234567890"
+                    value={settings.redirect_number || ''}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        redirect_number: e.target.value,
+                      })
+                    }
+                    helperText="If set, all incoming calls will be forwarded to this number. Leave empty to ring in browser."
+                  />
                 </Grid>
 
                 {/* Voice Message */}
@@ -304,23 +199,22 @@ const Settings: React.FC = () => {
               <List dense>
                 <ListItem>
                   <ListItemIcon>
-                    <Voicemail color="primary" />
+                    <Phone color="primary" />
                   </ListItemIcon>
-                  <ListItemText primary="Voicemail" secondary="Calls go directly to voicemail recording" />
+                  <ListItemText
+                    primary="Default Behavior"
+                    secondary="Calls ring in browser, go to voicemail if unanswered"
+                  />
                 </ListItem>
 
                 <ListItem>
                   <ListItemIcon>
                     <Phone color="primary" />
                   </ListItemIcon>
-                  <ListItemText primary="Ring Browser" secondary="Calls ring in your web browser" />
-                </ListItem>
-
-                <ListItem>
-                  <ListItemIcon>
-                    <Phone color="primary" />
-                  </ListItemIcon>
-                  <ListItemText primary="Forward" secondary="Calls are forwarded to another number" />
+                  <ListItemText
+                    primary="Redirect (Optional)"
+                    secondary="Forward all calls to another number if configured"
+                  />
                 </ListItem>
               </List>
 
@@ -340,8 +234,47 @@ const Settings: React.FC = () => {
               </Box>
 
               <Typography variant="body2" color="text.secondary">
-                <strong>Note:</strong> Settings are stored as environment variables. In a production setup, these would be persisted to a database.
+                <strong>Note:</strong> Settings are managed through environment variables and will be saved for future use.
               </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Future: Twilio Credentials */}
+        <Grid item xs={12} lg={8}>
+          <Card sx={{ opacity: 0.6 }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                <Info sx={{ mr: 1, color: 'info.main' }} />
+                <Typography variant="h6">Twilio Credentials</Typography>
+                <Chip label="Coming Soon" size="small" sx={{ ml: 2 }} />
+              </Box>
+
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                In the future, you'll be able to configure your Twilio Account SID, Auth Token, and other credentials directly from this interface.
+              </Typography>
+
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Account SID"
+                    placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                    disabled
+                    helperText="Your Twilio Account SID"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Auth Token"
+                    type="password"
+                    placeholder="••••••••••••••••••••••••••••••••"
+                    disabled
+                    helperText="Your Twilio Auth Token"
+                  />
+                </Grid>
+              </Grid>
             </CardContent>
           </Card>
         </Grid>

@@ -158,9 +158,7 @@ export interface Recording {
 }
 
 export interface VoiceSettings {
-  incoming_call_action: 'recording' | 'client' | 'redirect'
   redirect_number?: string
-  voice_language: string
   voice_message: string
 }
 
