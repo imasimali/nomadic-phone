@@ -1,7 +1,13 @@
 import axios from 'axios'
 import config from '../config.js'
+import { PushoverNotificationOptions, PushoverResponse } from '../types/index.js'
 
 class PushoverService {
+  private readonly apiUrl: string
+  private readonly userKey: string | undefined
+  private readonly apiToken: string | undefined
+  private readonly enabled: boolean
+
   constructor() {
     this.apiUrl = 'https://api.pushover.net/1/messages.json'
     this.userKey = config.PUSHOVER_USER_KEY
@@ -16,20 +22,23 @@ class PushoverService {
   }
 
   /**
-   * Send a push notification via Pushover
-   * @param {Object} options - Notification options
-   * @param {string} options.message - The message content
-   * @param {string} [options.title] - The notification title
-   * @param {string} [options.priority] - Priority level (-2, -1, 0, 1, 2)
-   * @param {string} [options.sound] - Sound name for the notification
-   * @param {string} [options.url] - URL to open when notification is tapped
-   * @param {string} [options.urlTitle] - Title for the URL
-   * @returns {Promise<Object>} Response from Pushover API
+   * Check if the service is enabled and configured
    */
-  async sendNotification(options) {
+  isEnabled(): boolean {
+    return this.enabled
+  }
+
+  /**
+   * Send a notification via Pushover
+   */
+  async sendNotification(options: PushoverNotificationOptions): Promise<PushoverResponse> {
     if (!this.enabled) {
-      console.warn('Pushover notification skipped: Service not configured')
+      console.warn('Pushover service is not enabled - skipping notification')
       return { success: false, error: 'Service not configured' }
+    }
+
+    if (!this.apiToken || !this.userKey) {
+      return { success: false, error: 'Missing API token or user key' }
     }
 
     const { message, title = 'Nomadic Phone', priority = '0', sound = 'pushover', url, urlTitle } = options
@@ -38,7 +47,7 @@ class PushoverService {
       throw new Error('Message is required for Pushover notification')
     }
 
-    const payload = {
+    const payload: any = {
       token: this.apiToken,
       user: this.userKey,
       message,
@@ -72,7 +81,7 @@ class PushoverService {
         console.error('❌ Pushover notification failed:', response.data)
         return { success: false, error: response.data.errors || 'Unknown error' }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error sending Pushover notification:', error.message)
 
       // Return a structured error response
@@ -85,11 +94,8 @@ class PushoverService {
 
   /**
    * Send an incoming call notification
-   * @param {string} fromNumber - The caller's phone number
-   * @param {string} callSid - The Twilio call SID
-   * @returns {Promise<Object>} Response from Pushover API
    */
-  async sendIncomingCallNotification(fromNumber, callSid) {
+  async sendIncomingCallNotification(fromNumber: string, _callSid: string): Promise<PushoverResponse> {
     const formattedNumber = this.formatPhoneNumber(fromNumber)
 
     return this.sendNotification({
@@ -104,21 +110,15 @@ class PushoverService {
 
   /**
    * Send a voicemail notification
-   * @param {string} fromNumber - The caller's phone number
-   * @param {string} callSid - The Twilio call SID
-   * @param {number} [duration] - Duration of the voicemail in seconds
-   * @returns {Promise<Object>} Response from Pushover API
    */
-  async sendVoicemailNotification(fromNumber, callSid, duration = null) {
+  async sendVoicemailNotification(
+    fromNumber: string,
+    _callSid: string,
+    duration?: number
+  ): Promise<PushoverResponse> {
     const formattedNumber = this.formatPhoneNumber(fromNumber)
-    let message = `New voicemail from ${formattedNumber}`
-
-    if (duration && duration > 0) {
-      const minutes = Math.floor(duration / 60)
-      const seconds = duration % 60
-      const durationStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`
-      message += ` (${durationStr})`
-    }
+    const durationText = duration && duration > 0 ? ` (${duration}s)` : ''
+    const message = `New voicemail from ${formattedNumber}${durationText}`
 
     return this.sendNotification({
       title: '🎵 New Voicemail',
@@ -132,11 +132,8 @@ class PushoverService {
 
   /**
    * Send a missed call notification
-   * @param {string} fromNumber - The caller's phone number
-   * @param {string} callSid - The Twilio call SID
-   * @returns {Promise<Object>} Response from Pushover API
    */
-  async sendMissedCallNotification(fromNumber, callSid) {
+  async sendMissedCallNotification(fromNumber: string, _callSid: string): Promise<PushoverResponse> {
     const formattedNumber = this.formatPhoneNumber(fromNumber)
 
     return this.sendNotification({
@@ -150,20 +147,22 @@ class PushoverService {
   }
 
   /**
-   * Send an incoming SMS notification
-   * @param {string} fromNumber - The sender's phone number
-   * @param {string} messageBody - The SMS message content
-   * @param {string} messageSid - The Twilio message SID
-   * @param {boolean} hasMedia - Whether the message contains media (MMS)
-   * @returns {Promise<Object>} Response from Pushover API
+   * Send an SMS notification
    */
-  async sendIncomingSMSNotification(fromNumber, messageBody, messageSid, hasMedia = false) {
+  async sendSMSNotification(
+    fromNumber: string,
+    messageBody?: string,
+    hasMedia: boolean = false
+  ): Promise<PushoverResponse> {
     const formattedNumber = this.formatPhoneNumber(fromNumber)
     const messageType = hasMedia ? 'MMS' : 'SMS'
     const icon = hasMedia ? '📷' : '💬'
 
     // Truncate message body for notification (keep it concise)
-    const truncatedBody = messageBody && messageBody.length > 100 ? messageBody.substring(0, 100) + '...' : messageBody || (hasMedia ? '[Media message]' : '[Empty message]')
+    const truncatedBody =
+      messageBody && messageBody.length > 100
+        ? messageBody.substring(0, 100) + '...'
+        : messageBody || (hasMedia ? '[Media message]' : '[Empty message]')
 
     return this.sendNotification({
       title: `${icon} New ${messageType}`,
@@ -176,31 +175,36 @@ class PushoverService {
   }
 
   /**
-   * Format phone number for display
-   * @param {string} phoneNumber - Raw phone number
-   * @returns {string} Formatted phone number
+   * Send an incoming SMS notification (alias for sendSMSNotification)
    */
-  formatPhoneNumber(phoneNumber) {
-    if (!phoneNumber) return 'Unknown Number'
+  async sendIncomingSMSNotification(
+    fromNumber: string,
+    messageBody?: string,
+    _messageSid?: string,
+    hasMedia: boolean = false
+  ): Promise<PushoverResponse> {
+    return this.sendSMSNotification(fromNumber, messageBody, hasMedia)
+  }
 
-    // Remove any non-digit characters except +
-    const cleaned = phoneNumber.replace(/[^\d+]/g, '')
+  /**
+   * Format phone number for display
+   */
+  private formatPhoneNumber(phoneNumber: string): string {
+    if (!phoneNumber) return 'Unknown'
 
-    // If it's a US number (+1XXXXXXXXXX), format it nicely
-    if (cleaned.startsWith('+1') && cleaned.length === 12) {
-      const number = cleaned.substring(2)
-      return `+1 (${number.substring(0, 3)}) ${number.substring(3, 6)}-${number.substring(6)}`
+    // Remove +1 country code for US numbers for cleaner display
+    if (phoneNumber.startsWith('+1') && phoneNumber.length === 12) {
+      const number = phoneNumber.substring(2)
+      return `(${number.substring(0, 3)}) ${number.substring(3, 6)}-${number.substring(6)}`
     }
 
-    // For international numbers, just return as-is
-    return cleaned
+    return phoneNumber
   }
 
   /**
    * Test the Pushover service configuration
-   * @returns {Promise<Object>} Test result
    */
-  async testService() {
+  async testService(): Promise<PushoverResponse> {
     if (!this.enabled) {
       return { success: false, error: 'Service not configured' }
     }

@@ -3,18 +3,20 @@
   "version": "1.0.0",
   "description": "A simple web-based phone system built with Node.js, React, and Twilio APIs",
   "type": "module",
-  "main": "server/index.js",
+  "main": "server/dist/index.js",
   "scripts": {
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
-    "server:dev": "nodemon server/index.js",
+    "server:dev": "nodemon --exec \"tsx server/index.ts\"",
+    "server:build": "tsc -p server/tsconfig.json",
+    "server:start": "node server/dist/index.js",
     "client:dev": "cd client && npm start",
-    "build": "cd client && npm run build",
-    "start": "node server/index.js",
+    "build": "npm run server:build && cd client && npm run build",
+    "start": "npm run server:start",
     "install:all": "npm install && cd client && npm install",
     "test": "jest",
     "test:watch": "jest --watch",
-    "lint": "eslint server/ --ext .js && cd client && npm run build",
-    "lint:fix": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\" \"client/src/**/*.{js,jsx,ts,tsx,css}\" && eslint server/ --ext .js --fix"
+    "lint": "eslint server/ --ext .ts && cd client && npm run build",
+    "lint:fix": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\" \"client/src/**/*.{js,jsx,ts,tsx,css}\" && eslint server/ --ext .ts --fix"
   },
   "keywords": [
     "twilio",
@@ -41,7 +43,14 @@
     "twilio": "^4.19.3"
   },
   "devDependencies": {
+    "@types/compression": "^1.8.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/helmet": "^0.0.48",
     "@types/jest": "^29.5.8",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^24.4.0",
     "concurrently": "^8.2.2",
     "eslint": "^9.35.0",
     "eslint-config-prettier": "^10.1.8",
@@ -49,7 +58,10 @@
     "jest": "^29.7.0",
     "nodemon": "^3.0.2",
     "prettier": "^3.6.2",
-    "supertest": "^6.3.3"
+    "supertest": "^6.3.3",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
   },
   "engines": {
     "node": ">=18.0.0",

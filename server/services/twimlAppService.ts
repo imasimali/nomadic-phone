@@ -1,11 +1,25 @@
-import twilio from 'twilio'
+import twilio, { Twilio } from 'twilio'
+import fs from 'fs'
+import path from 'path'
 import config from '../config.js'
 
+interface TwiMLAppResult {
+  sid: string
+  friendlyName: string
+  voiceUrl: string
+  smsUrl: string
+  created: boolean
+}
+
 class TwiMLAppService {
+  private client: Twilio | null
+  private readonly APP_NAME: string
+
   constructor() {
     if (!config.TWILIO_ACCOUNT_SID || !config.TWILIO_AUTH_TOKEN) {
       console.warn('Twilio credentials not found in configuration')
       this.client = null
+      this.APP_NAME = 'Nomadic-Phone-Voice-App'
       return
     }
 
@@ -13,7 +27,7 @@ class TwiMLAppService {
     this.APP_NAME = 'Nomadic-Phone-Voice-App'
   }
 
-  async ensureTwiMLApp() {
+  async ensureTwiMLApp(): Promise<TwiMLAppResult> {
     if (!this.client) {
       throw new Error('Twilio client not initialized')
     }
@@ -23,15 +37,15 @@ class TwiMLAppService {
       const appConfig = {
         friendlyName: this.APP_NAME,
         voiceUrl: `${config.WEBHOOK_BASE_URL}/webhooks/voice/twiml-app`,
-        voiceMethod: 'POST',
+        voiceMethod: 'POST' as const,
         voiceFallbackUrl: `${config.WEBHOOK_BASE_URL}/webhooks/voice/twiml-app`,
-        voiceFallbackMethod: 'POST',
+        voiceFallbackMethod: 'POST' as const,
         statusCallback: `${config.WEBHOOK_BASE_URL}/webhooks/voice/status`,
-        statusCallbackMethod: 'POST',
+        statusCallbackMethod: 'POST' as const,
         smsUrl: `${config.WEBHOOK_BASE_URL}/webhooks/sms/incoming`,
-        smsMethod: 'POST',
+        smsMethod: 'POST' as const,
         smsFallbackUrl: `${config.WEBHOOK_BASE_URL}/webhooks/sms/incoming`,
-        smsFallbackMethod: 'POST',
+        smsFallbackMethod: 'POST' as const,
         smsStatusCallback: `${config.WEBHOOK_BASE_URL}/webhooks/sms/status`,
       }
 
@@ -41,7 +55,7 @@ class TwiMLAppService {
         limit: 1,
       })
 
-      let app
+      let app: any
       if (existingApps.length > 0) {
         // Update existing app
         app = existingApps[0]
@@ -67,17 +81,14 @@ class TwiMLAppService {
         smsUrl: app.smsUrl,
         created: existingApps.length === 0,
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error managing TwiML Application:', error)
       throw new Error(`Failed to manage TwiML Application: ${error.message}`)
     }
   }
 
-  async updateEnvFile(appSid) {
+  private async updateEnvFile(appSid: string): Promise<void> {
     try {
-      const fs = await import('fs')
-      const path = await import('path')
-
       const envPath = path.resolve('.env')
 
       // Read current .env file
@@ -88,60 +99,30 @@ class TwiMLAppService {
         console.warn('.env file not found, will create new one')
       }
 
-      // Update or add TWILIO_APPLICATION_SID
-      const appSidLine = `TWILIO_APPLICATION_SID=${appSid}`
+      // Check if TWILIO_APPLICATION_SID already exists
+      const hasAppSid = envContent.includes('TWILIO_APPLICATION_SID=')
 
-      if (envContent.includes('TWILIO_APPLICATION_SID=')) {
-        // Replace existing line
-        envContent = envContent.replace(/TWILIO_APPLICATION_SID=.*/, appSidLine)
-        console.log(`📝 Updated TWILIO_APPLICATION_SID in .env file`)
+      if (!hasAppSid) {
+        // Add new line
+        envContent += `\nTWILIO_APPLICATION_SID=${appSid}`
       } else {
-        // Add new line after other Twilio config
-        const lines = envContent.split('\n')
-        let insertIndex = -1
-
-        // Find where to insert (after TWILIO_PHONE_NUMBER)
-        for (let i = 0; i < lines.length; i++) {
-          if (lines[i].startsWith('TWILIO_PHONE_NUMBER=')) {
-            insertIndex = i + 1
-            break
-          }
-        }
-
-        if (insertIndex > -1) {
-          lines.splice(insertIndex, 0, appSidLine)
-        } else {
-          // If no TWILIO_PHONE_NUMBER found, add at end of Twilio section
-          for (let i = 0; i < lines.length; i++) {
-            if (lines[i].startsWith('TWILIO_AUTH_TOKEN=')) {
-              insertIndex = i + 1
-              break
-            }
-          }
-          if (insertIndex > -1) {
-            lines.splice(insertIndex, 0, appSidLine)
-          } else {
-            lines.push(appSidLine)
-          }
-        }
-
-        envContent = lines.join('\n')
-        console.log(`📝 Added TWILIO_APPLICATION_SID to .env file`)
+        // Update existing line
+        envContent = envContent.replace(/TWILIO_APPLICATION_SID=.*/, `TWILIO_APPLICATION_SID=${appSid}`)
       }
 
       // Write back to .env file
       fs.writeFileSync(envPath, envContent)
 
       // Update the config object in memory
-      config.TWILIO_APPLICATION_SID = appSid
+      ;(config as any).TWILIO_APPLICATION_SID = appSid
       process.env.TWILIO_APPLICATION_SID = appSid
-    } catch (error) {
+    } catch (error: any) {
       console.warn('Could not update .env file:', error.message)
       // Don't throw error, just warn - the app can still work
     }
   }
 
-  async getTwiMLApp() {
+  async getTwiMLApp(): Promise<any | null> {
     if (!this.client) {
       throw new Error('Twilio client not initialized')
     }
@@ -153,11 +134,13 @@ class TwiMLAppService {
       })
 
       return apps.length > 0 ? apps[0] : null
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching TwiML Application:', error)
       throw new Error(`Failed to fetch TwiML Application: ${error.message}`)
     }
   }
 }
 
-export default new TwiMLAppService()
+const twimlAppService = new TwiMLAppService()
+
+export default twimlAppService

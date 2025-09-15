@@ -7,7 +7,7 @@ import path from 'path'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-import express from 'express'
+import express, { Request, Response } from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import compression from 'compression'
@@ -44,7 +44,7 @@ app.use(
         objectSrc: ["'none'"],
       },
     },
-  }),
+  })
 )
 
 // Simple rate limiting
@@ -58,9 +58,9 @@ app.use('/api/', limiter)
 // Simple CORS
 app.use(
   cors({
-    origin: config.NODE_ENV === 'production' ? 'http://localhost:3000' : ['http://localhost:3000', 'http://localhost:3001'],
+    origin: config.NODE_ENV === 'production' ? config.APP_URL : ['http://localhost:3000', 'http://localhost:3001'],
     credentials: true,
-  }),
+  })
 )
 
 // Basic middleware
@@ -74,7 +74,7 @@ if (config.NODE_ENV !== 'test') {
 }
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', (_req: Request, res: Response) => {
   res.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
@@ -92,7 +92,7 @@ app.use('/webhooks', webhookRoutes) // Webhooks don't need auth token
 if (config.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/build')))
 
-  app.get('*', (req, res) => {
+  app.get('*', (_req: Request, res: Response) => {
     res.sendFile(path.join(__dirname, '../client/build/index.html'))
   })
 }
@@ -101,7 +101,7 @@ if (config.NODE_ENV === 'production') {
 app.use(errorHandler)
 
 // Server startup
-async function startServer() {
+async function startServer(): Promise<void> {
   try {
     // Initialize API key service on startup
     if (config.TWILIO_ACCOUNT_SID && config.TWILIO_AUTH_TOKEN) {

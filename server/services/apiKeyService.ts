@@ -1,49 +1,60 @@
-import twilio from 'twilio'
+import twilio, { Twilio } from 'twilio'
 import fs from 'fs'
 import path from 'path'
 import config from '../config.js'
+import { ApiKey } from '../types/index.js'
 
 class ApiKeyService {
+  private client: Twilio | null
+  private readonly API_KEY_NAME: string
+  private STORED_API_KEY_SID: string | undefined
+  private STORED_API_SECRET: string | undefined
+
   constructor() {
     if (!config.TWILIO_ACCOUNT_SID || !config.TWILIO_AUTH_TOKEN) {
       console.warn('Twilio credentials not found in configuration')
       this.client = null
-      this.cachedApiKey = null
+
       this.API_KEY_NAME = 'Nomadic-Phone-App'
-      this.STORED_API_KEY_SID = null
-      this.STORED_API_SECRET = null
+      this.STORED_API_KEY_SID = undefined
+      this.STORED_API_SECRET = undefined
       return
     }
 
     // Use Account SID and Auth Token to manage API keys
     this.client = twilio(config.TWILIO_ACCOUNT_SID, config.TWILIO_AUTH_TOKEN)
-    this.cachedApiKey = null
+
     this.API_KEY_NAME = 'Nomadic-Phone-App'
     // Store API key data in environment variables for persistence
     this.STORED_API_KEY_SID = config.NOMADIC_API_KEY_SID
     this.STORED_API_SECRET = config.NOMADIC_API_SECRET
   }
 
-  /**
-   * Get or create an API key for general app use (Voice SDK, etc.)
-   * First tries to find existing key by name, creates if not found
-   * @returns {Promise<{sid: string, secret: string}>}
-   */
-  async getApiKey() {
+  async initialize(): Promise<void> {
     try {
-      // Return cached key if available
-      if (this.cachedApiKey) {
-        return this.cachedApiKey
-      }
+      await this.getApiKey()
+      console.log('✅ API key service initialized successfully')
+    } catch (error: any) {
+      console.error('❌ Failed to initialize API key service:', error.message)
+      throw error
+    }
+  }
 
-      // Check if we have stored API key credentials
+  async getApiKey(): Promise<ApiKey> {
+    if (!this.client) {
+      throw new Error('Twilio client not initialized')
+    }
+
+    try {
+      // Check if we have stored credentials and they're valid
       if (this.STORED_API_KEY_SID && this.STORED_API_SECRET) {
         console.log(`Using stored API key: ${this.STORED_API_KEY_SID}`)
-        this.cachedApiKey = {
+        const keyData: ApiKey = {
           sid: this.STORED_API_KEY_SID,
           secret: this.STORED_API_SECRET,
         }
-        return this.cachedApiKey
+
+        return keyData
       }
 
       // If no stored credentials, create a new API key
@@ -52,55 +63,36 @@ class ApiKeyService {
         friendlyName: this.API_KEY_NAME,
       })
 
-      const keyData = {
+      const keyData: ApiKey = {
         sid: apiKey.sid,
         secret: apiKey.secret,
       }
 
       // Cache the API key
-      this.cachedApiKey = keyData
+
       console.log(`Created API key: ${apiKey.sid}`)
 
       // Automatically add to .env file
       await this.addToEnvFile(apiKey.sid, apiKey.secret)
 
       return keyData
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error getting/creating API key:', error)
       throw new Error(`Failed to get/create API key: ${error.message}`)
     }
   }
 
-  /**
-   * Find an API key by its friendly name
-   * @param {string} friendlyName
-   * @returns {Promise<Object|null>}
-   */
-  async findApiKeyByName(friendlyName) {
-    try {
-      // Use the correct Twilio API path for listing keys
-      const keys = await this.client.keys.list({
-        limit: 100, // Get up to 100 keys to search through
-      })
+  private async findApiKeyByName(friendlyName: string): Promise<any | null> {
+    if (!this.client) {
+      throw new Error('Twilio client not initialized')
+    }
 
+    try {
+      const keys = await this.client.keys.list({ limit: 50 })
       return keys.find((key) => key.friendlyName === friendlyName) || null
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error finding API key by name:', error)
       return null
-    }
-  }
-
-  /**
-   * Initialize API key on app startup
-   * Call this when the server starts to ensure the key exists
-   */
-  async initialize() {
-    try {
-      await this.getApiKey()
-      console.log('API key service initialized successfully')
-    } catch (error) {
-      console.error('Failed to initialize API key service:', error)
-      throw error
     }
   }
 
@@ -108,7 +100,11 @@ class ApiKeyService {
    * Recreate the API key (useful for key rotation)
    * Deletes the existing key and creates a new one
    */
-  async rotateApiKey() {
+  async rotateApiKey(): Promise<ApiKey> {
+    if (!this.client) {
+      throw new Error('Twilio client not initialized')
+    }
+
     try {
       // Find and delete existing key
       const existingKey = await this.findApiKeyByName(this.API_KEY_NAME)
@@ -122,7 +118,7 @@ class ApiKeyService {
       const newKey = await this.getApiKey()
       console.log(`Rotated to new API key: ${newKey.sid}`)
       return newKey
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error rotating API key:', error)
       throw error
     }
@@ -130,26 +126,22 @@ class ApiKeyService {
 
   /**
    * Get API key specifically for Voice SDK (alias for getApiKey)
-   * @returns {Promise<{sid: string, secret: string}>}
    */
-  async getVoiceApiKey() {
+  async getVoiceApiKey(): Promise<ApiKey> {
     return this.getApiKey()
   }
 
   /**
    * Get API key for any Twilio service that requires API key/secret
-   * @returns {Promise<{sid: string, secret: string}>}
    */
-  async getServiceApiKey() {
+  async getServiceApiKey(): Promise<ApiKey> {
     return this.getApiKey()
   }
 
   /**
    * Automatically add API key credentials to .env file
-   * @param {string} apiKeySid
-   * @param {string} apiSecret
    */
-  async addToEnvFile(apiKeySid, apiSecret) {
+  private async addToEnvFile(apiKeySid: string, apiSecret: string): Promise<void> {
     try {
       const envPath = path.join(process.cwd(), '.env')
 
@@ -159,31 +151,32 @@ class ApiKeyService {
         envContent = fs.readFileSync(envPath, 'utf8')
       }
 
-      // Check if the API key variables already exist
+      // Check if the keys already exist
       const hasApiKeySid = envContent.includes('NOMADIC_API_KEY_SID=')
       const hasApiSecret = envContent.includes('NOMADIC_API_SECRET=')
 
-      if (!hasApiKeySid || !hasApiSecret) {
-        // Add the API key credentials to the end of the file
-        const newLines = []
-
-        if (!hasApiKeySid) {
-          newLines.push(`NOMADIC_API_KEY_SID=${apiKeySid}`)
-        }
-        if (!hasApiSecret) {
-          newLines.push(`NOMADIC_API_SECRET=${apiSecret}`)
-        }
-
-        // Add a comment if this is the first time adding these
-        if (newLines.length > 0) {
-          const comment = '\n# Auto-generated API key (created automatically, but stored for persistence)'
-          envContent += comment + '\n' + newLines.join('\n') + '\n'
-
-          fs.writeFileSync(envPath, envContent)
-          console.log('✅ Automatically added API key credentials to .env file')
-        }
+      // Add or update the keys
+      if (!hasApiKeySid) {
+        envContent += `\nNOMADIC_API_KEY_SID=${apiKeySid}`
+      } else {
+        envContent = envContent.replace(/NOMADIC_API_KEY_SID=.*/, `NOMADIC_API_KEY_SID=${apiKeySid}`)
       }
-    } catch (error) {
+
+      if (!hasApiSecret) {
+        envContent += `\nNOMADIC_API_SECRET=${apiSecret}`
+      } else {
+        envContent = envContent.replace(/NOMADIC_API_SECRET=.*/, `NOMADIC_API_SECRET=${apiSecret}`)
+      }
+
+      // Write back to .env file
+      fs.writeFileSync(envPath, envContent)
+
+      // Update the stored values
+      this.STORED_API_KEY_SID = apiKeySid
+      this.STORED_API_SECRET = apiSecret
+
+      console.log('✅ Updated .env file with API key credentials')
+    } catch (error: any) {
       console.error('Error updating .env file:', error)
       console.log('⚠️  Please manually add these to your .env file:')
       console.log(`NOMADIC_API_KEY_SID=${apiKeySid}`)
@@ -194,9 +187,8 @@ class ApiKeyService {
   /**
    * Clear the cached API key (force refresh on next request)
    */
-  clearCache() {
-    this.cachedApiKey = null
-    this.cacheExpiry = null
+  clearCache(): void {
+    // Cache clearing logic would go here if we had caching
   }
 }
 

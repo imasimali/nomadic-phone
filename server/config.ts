@@ -1,6 +1,7 @@
 import dotenv from 'dotenv'
 import { fileURLToPath } from 'url'
 import path from 'path'
+import { Config } from './types/index.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -8,12 +9,12 @@ const __dirname = path.dirname(__filename)
 // Load .env from project root
 dotenv.config({ path: path.join(__dirname, '..', '.env') })
 
-export default {
+const config: Config = {
   TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID,
   TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
   TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER,
   TWILIO_APPLICATION_SID: process.env.TWILIO_APPLICATION_SID,
-  PORT: process.env.PORT || 3001,
+  PORT: parseInt(process.env.PORT || '3001', 10),
   NODE_ENV: process.env.NODE_ENV || 'development',
   JWT_SECRET: process.env.JWT_SECRET,
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET,
@@ -30,3 +31,5 @@ export default {
   PUSHOVER_USER_KEY: process.env.PUSHOVER_USER_KEY,
   PUSHOVER_API_TOKEN: process.env.PUSHOVER_API_TOKEN,
 }
+
+export default config

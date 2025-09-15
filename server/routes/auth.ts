@@ -1,8 +1,9 @@
-import express from 'express'
+import express, { Response } from 'express'
 import { body, validationResult } from 'express-validator'
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken, authenticateToken } from '../middleware/auth.js'
 import { asyncHandler, AppError } from '../middleware/errorHandler.js'
 import config from '../config.js'
+import { AuthenticatedRequest, LoginRequest, RefreshTokenRequest } from '../types/index.js'
 
 const router = express.Router()
 
@@ -13,13 +14,14 @@ const validateLogin = [body('password').notEmpty().withMessage('Password is requ
 router.post(
   '/login',
   validateLogin,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: express.Request<{}, {}, LoginRequest>, res: Response) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Validation failed',
         details: errors.array(),
       })
+      return
     }
 
     const { password } = req.body
@@ -51,13 +53,13 @@ router.post(
         refreshToken,
       },
     })
-  }),
+  })
 )
 
 // Refresh token
 router.post(
   '/refresh',
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: express.Request<{}, {}, RefreshTokenRequest>, res: Response) => {
     const { refreshToken } = req.body
 
     if (!refreshToken) {
@@ -65,7 +67,7 @@ router.post(
     }
 
     try {
-      const decoded = verifyRefreshToken(refreshToken)
+      verifyRefreshToken(refreshToken)
 
       const newAccessToken = generateAccessToken()
       const newRefreshToken = generateRefreshToken()
@@ -79,14 +81,14 @@ router.post(
     } catch (error) {
       throw new AppError('Invalid refresh token', 401, 'INVALID_REFRESH_TOKEN')
     }
-  }),
+  })
 )
 
 // Get current user profile
 router.get(
   '/profile',
   authenticateToken,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (_req: AuthenticatedRequest, res: Response) => {
     res.json({
       user: {
         id: 1,
@@ -95,20 +97,20 @@ router.get(
         twilio_client_name: 'nomadic_client',
       },
     })
-  }),
+  })
 )
 
 // Logout (client-side token invalidation)
 router.post(
   '/logout',
   authenticateToken,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (_req: AuthenticatedRequest, res: Response) => {
     // In a production app, you might want to maintain a blacklist of tokens
     // For now, we'll just return success and let the client handle token removal
     res.json({
       message: 'Logout successful',
     })
-  }),
+  })
 )
 
 export default router

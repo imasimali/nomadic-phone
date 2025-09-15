@@ -1,21 +1,28 @@
-import express from 'express'
+import express, { Request, Response, NextFunction } from 'express'
 import twilio from 'twilio'
 import { asyncHandler } from '../middleware/errorHandler.js'
 import pushoverService from '../services/pushoverService.js'
 import config from '../config.js'
+import { TwilioVoiceWebhook, TwilioSMSWebhook } from '../types/index.js'
 
 const router = express.Router()
 
 // Twilio webhook validation middleware
-const validateTwilioRequest = (req, res, next) => {
-  const twilioSignature = req.headers['x-twilio-signature']
+const validateTwilioRequest = (req: Request, res: Response, next: NextFunction): void => {
+  const twilioSignature = req.headers['x-twilio-signature'] as string
   const url = `${req.protocol}://${req.get('host')}${req.originalUrl}`
 
   if (config.NODE_ENV === 'production') {
+    if (!config.TWILIO_AUTH_TOKEN) {
+      res.status(500).json({ error: 'Twilio auth token not configured' })
+      return
+    }
+
     const isValid = twilio.validateRequest(config.TWILIO_AUTH_TOKEN, twilioSignature, url, req.body)
 
     if (!isValid) {
-      return res.status(403).json({ error: 'Invalid Twilio signature' })
+      res.status(403).json({ error: 'Invalid Twilio signature' })
+      return
     }
   }
 
@@ -28,7 +35,7 @@ const validateTwilioRequest = (req, res, next) => {
 router.post(
   '/voice/twiml-app',
   validateTwilioRequest,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request<{}, {}, TwilioVoiceWebhook>, res: Response) => {
     const { To, From, CallSid } = req.body
     const twiml = new twilio.twiml.VoiceResponse()
 
@@ -85,14 +92,14 @@ router.post(
     }
 
     res.type('text/xml').send(twiml.toString())
-  }),
+  })
 )
 
 // Handle call timeout - when client or redirect number doesn't answer
 router.post(
   '/voice/call-timeout',
   validateTwilioRequest,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const { DialCallStatus, DialCallDuration } = req.body
 
     console.log(`Call timeout status: ${DialCallStatus}${DialCallDuration ? ` (duration: ${DialCallDuration}s)` : ''}`)
@@ -105,7 +112,9 @@ router.post(
       console.log(`Call not answered (${DialCallStatus}), redirecting to voicemail`)
 
       // Go to voicemail
-      twiml.say(config.VOICE_MESSAGE)
+      if (config.VOICE_MESSAGE) {
+        twiml.say(config.VOICE_MESSAGE)
+      }
       twiml.record({
         maxLength: 300,
         recordingStatusCallback: `${config.WEBHOOK_BASE_URL}/webhooks/voice/recording`,
@@ -113,14 +122,14 @@ router.post(
     }
 
     res.type('text/xml').send(twiml.toString())
-  }),
+  })
 )
 
 // Handle dial status for outbound calls
 router.post(
   '/voice/dial-status',
   validateTwilioRequest,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const { DialCallStatus, DialCallDuration } = req.body
 
     console.log(`Dial status: ${DialCallStatus}${DialCallDuration ? ` (duration: ${DialCallDuration}s)` : ''}`)
@@ -128,14 +137,14 @@ router.post(
     // Return empty TwiML to end the call flow
     const twiml = new twilio.twiml.VoiceResponse()
     res.type('text/xml').send(twiml.toString())
-  }),
+  })
 )
 
 // Handle call status updates
 router.post(
   '/voice/status',
   validateTwilioRequest,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const { CallSid, CallStatus, CallDuration, From, To, Direction } = req.body
 
     console.log(`Call ${CallSid} status updated to ${CallStatus}${CallDuration ? ` (duration: ${CallDuration}s)` : ''}`)
@@ -171,15 +180,15 @@ router.post(
     }
 
     res.status(200).send('OK')
-  }),
+  })
 )
 
 // Handle recording callbacks
 router.post(
   '/voice/recording',
   validateTwilioRequest,
-  asyncHandler(async (req, res) => {
-    const { CallSid, RecordingUrl, RecordingSid, RecordingDuration } = req.body
+  asyncHandler(async (req: Request, res: Response) => {
+    const { CallSid, RecordingUrl, RecordingDuration } = req.body
 
     console.log(`Recording available for call ${CallSid}: ${RecordingUrl} (${RecordingDuration}s)`)
 
@@ -206,7 +215,7 @@ router.post(
     }
 
     res.status(200).send('OK')
-  }),
+  })
 )
 
 // SMS webhook handlers
@@ -215,18 +224,19 @@ router.post(
 router.post(
   '/sms/incoming',
   validateTwilioRequest,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request<{}, {}, TwilioSMSWebhook>, res: Response) => {
     const { MessageSid, From, To, Body, NumMedia } = req.body
 
     // Check if this is our configured Twilio number
     if (To !== config.TWILIO_PHONE_NUMBER) {
-      return res.status(200).send('OK')
+      res.status(200).send('OK')
+      return
     }
 
     console.log(`📱 Received SMS from ${From}: ${Body}`)
 
     // Handle media URLs for MMS
-    const mediaUrls = []
+    const mediaUrls: string[] = []
     if (NumMedia && parseInt(NumMedia) > 0) {
       for (let i = 0; i < parseInt(NumMedia); i++) {
         const mediaUrl = req.body[`MediaUrl${i}`]
@@ -246,14 +256,14 @@ router.post(
     }
 
     res.status(200).send('OK')
-  }),
+  })
 )
 
 // Handle SMS status updates
 router.post(
   '/sms/status',
   validateTwilioRequest,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const { MessageSid, MessageStatus, ErrorCode, ErrorMessage } = req.body
 
     // Since we're using Twilio API directly, we don't need to store status updates
@@ -261,7 +271,7 @@ router.post(
     console.log(`SMS ${MessageSid} status updated to ${MessageStatus}${ErrorCode ? ` (error: ${ErrorCode} - ${ErrorMessage})` : ''}`)
 
     res.status(200).send('OK')
-  }),
+  })
 )
 
 export default router
