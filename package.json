@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
     "server:dev": "nodemon --exec \"tsx server/index.ts\"",
-    "server:build": "tsc -p server/tsconfig.json",
+    "server:build": "npx tsc -p server/tsconfig.json",
     "server:start": "node server/dist/index.js",
     "client:dev": "cd client && npm start",
     "build": "npm run server:build && cd client && npm run build",
