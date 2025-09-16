@@ -60,7 +60,7 @@ export interface Recording {
   recording_sid: string
   call_sid: string
   duration: number
-  url: string
+  recording_url: string
   created_at: Date
   updated_at: Date
   // Call details

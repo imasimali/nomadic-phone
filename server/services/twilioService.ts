@@ -166,7 +166,7 @@ class TwilioService {
               recording_sid: recording.sid,
               call_sid: recording.callSid,
               duration: recording.duration ? parseInt(recording.duration.toString()) : 0,
-              url: `/api/voice/recordings/${recording.sid}`, // Use our proxy endpoint
+              recording_url: `/api/voice/recordings/${recording.sid}`,
               created_at: recording.dateCreated,
               updated_at: recording.dateUpdated,
               // Call details
@@ -186,7 +186,7 @@ class TwilioService {
               recording_sid: recording.sid,
               call_sid: recording.callSid,
               duration: recording.duration ? parseInt(recording.duration.toString()) : 0,
-              url: `/api/voice/recordings/${recording.sid}`,
+              recording_url: `/api/voice/recordings/${recording.sid}`,
               created_at: recording.dateCreated,
               updated_at: recording.dateUpdated,
               // Default values when call details are unavailable
