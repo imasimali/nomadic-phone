@@ -111,11 +111,7 @@ class PushoverService {
   /**
    * Send a voicemail notification
    */
-  async sendVoicemailNotification(
-    fromNumber: string,
-    _callSid: string,
-    duration?: number
-  ): Promise<PushoverResponse> {
+  async sendVoicemailNotification(fromNumber: string, _callSid: string, duration?: number): Promise<PushoverResponse> {
     const formattedNumber = this.formatPhoneNumber(fromNumber)
     const durationText = duration && duration > 0 ? ` (${duration}s)` : ''
     const message = `New voicemail from ${formattedNumber}${durationText}`
@@ -149,20 +145,13 @@ class PushoverService {
   /**
    * Send an SMS notification
    */
-  async sendSMSNotification(
-    fromNumber: string,
-    messageBody?: string,
-    hasMedia: boolean = false
-  ): Promise<PushoverResponse> {
+  async sendSMSNotification(fromNumber: string, messageBody?: string, hasMedia: boolean = false): Promise<PushoverResponse> {
     const formattedNumber = this.formatPhoneNumber(fromNumber)
     const messageType = hasMedia ? 'MMS' : 'SMS'
     const icon = hasMedia ? '📷' : '💬'
 
     // Truncate message body for notification (keep it concise)
-    const truncatedBody =
-      messageBody && messageBody.length > 100
-        ? messageBody.substring(0, 100) + '...'
-        : messageBody || (hasMedia ? '[Media message]' : '[Empty message]')
+    const truncatedBody = messageBody && messageBody.length > 100 ? messageBody.substring(0, 100) + '...' : messageBody || (hasMedia ? '[Media message]' : '[Empty message]')
 
     return this.sendNotification({
       title: `${icon} New ${messageType}`,
@@ -177,12 +166,7 @@ class PushoverService {
   /**
    * Send an incoming SMS notification (alias for sendSMSNotification)
    */
-  async sendIncomingSMSNotification(
-    fromNumber: string,
-    messageBody?: string,
-    _messageSid?: string,
-    hasMedia: boolean = false
-  ): Promise<PushoverResponse> {
+  async sendIncomingSMSNotification(fromNumber: string, messageBody?: string, _messageSid?: string, hasMedia: boolean = false): Promise<PushoverResponse> {
     return this.sendSMSNotification(fromNumber, messageBody, hasMedia)
   }
 

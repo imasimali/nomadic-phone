@@ -71,9 +71,12 @@ router.post(
         console.log('Forwarding call to browser client')
 
         // Redirect to retry handler that will keep trying to connect
-        twiml.redirect({
-          method: 'POST',
-        }, `${config.WEBHOOK_BASE_URL}/webhooks/voice/dial-client?attempt=1`)
+        twiml.redirect(
+          {
+            method: 'POST',
+          },
+          `${config.WEBHOOK_BASE_URL}/webhooks/voice/dial-client?attempt=1`,
+        )
       }
     } else {
       // This is an OUTBOUND call from the Voice SDK
@@ -90,7 +93,7 @@ router.post(
     }
 
     res.type('text/xml').send(twiml.toString())
-  })
+  }),
 )
 
 // Handle dialing the client with retry logic
@@ -120,7 +123,7 @@ router.post(
     dial.client('nomadic_client')
 
     res.type('text/xml').send(twiml.toString())
-  })
+  }),
 )
 
 // Handle the result of a dial attempt
@@ -148,9 +151,12 @@ router.post(
     const rejectedStatuses = ['canceled', 'busy', 'failed']
     if (rejectedStatuses.includes(DialCallStatus)) {
       console.log(`Call was rejected/canceled (${DialCallStatus}), redirecting to call-timeout`)
-      twiml.redirect({
-        method: 'POST',
-      }, `${config.WEBHOOK_BASE_URL}/webhooks/voice/call-timeout`)
+      twiml.redirect(
+        {
+          method: 'POST',
+        },
+        `${config.WEBHOOK_BASE_URL}/webhooks/voice/call-timeout`,
+      )
       res.type('text/xml').send(twiml.toString())
       return
     }
@@ -158,19 +164,25 @@ router.post(
     // If we haven't reached max attempts, try again (only for no-answer)
     if (attempt < maxAttempts) {
       console.log(`Retrying... (attempt ${attempt + 1}/${maxAttempts})`)
-      twiml.redirect({
-        method: 'POST',
-      }, `${config.WEBHOOK_BASE_URL}/webhooks/voice/dial-client?attempt=${attempt + 1}`)
+      twiml.redirect(
+        {
+          method: 'POST',
+        },
+        `${config.WEBHOOK_BASE_URL}/webhooks/voice/dial-client?attempt=${attempt + 1}`,
+      )
     } else {
       // Max attempts reached, redirect to call-timeout handler
       console.log('Max attempts reached, redirecting to call-timeout')
-      twiml.redirect({
-        method: 'POST',
-      }, `${config.WEBHOOK_BASE_URL}/webhooks/voice/call-timeout`)
+      twiml.redirect(
+        {
+          method: 'POST',
+        },
+        `${config.WEBHOOK_BASE_URL}/webhooks/voice/call-timeout`,
+      )
     }
 
     res.type('text/xml').send(twiml.toString())
-  })
+  }),
 )
 
 // Handle call timeout - when client or redirect number doesn't answer
@@ -202,7 +214,7 @@ router.post(
     }
 
     res.type('text/xml').send(twiml.toString())
-  })
+  }),
 )
 
 // Handle dial status for outbound calls
@@ -217,7 +229,7 @@ router.post(
     // Return empty TwiML to end the call flow
     const twiml = new twilio.twiml.VoiceResponse()
     res.type('text/xml').send(twiml.toString())
-  })
+  }),
 )
 
 // Handle call status updates
@@ -260,7 +272,7 @@ router.post(
     }
 
     res.status(200).send('OK')
-  })
+  }),
 )
 
 // Handle recording callbacks
@@ -295,7 +307,7 @@ router.post(
     }
 
     res.status(200).send('OK')
-  })
+  }),
 )
 
 // SMS webhook handlers
@@ -336,7 +348,7 @@ router.post(
     }
 
     res.status(200).send('OK')
-  })
+  }),
 )
 
 // Handle SMS status updates
@@ -351,7 +363,7 @@ router.post(
     console.log(`SMS ${MessageSid} status updated to ${MessageStatus}${ErrorCode ? ` (error: ${ErrorCode} - ${ErrorMessage})` : ''}`)
 
     res.status(200).send('OK')
-  })
+  }),
 )
 
 export default router

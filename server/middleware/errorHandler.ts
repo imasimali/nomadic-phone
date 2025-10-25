@@ -16,12 +16,7 @@ interface CustomError extends Error {
   isOperational?: boolean
 }
 
-const errorHandler = (
-  err: TwilioError | RateLimitError | CustomError | Error,
-  _req: Request,
-  res: Response,
-  _next: NextFunction
-): void => {
+const errorHandler = (err: TwilioError | RateLimitError | CustomError | Error, _req: Request, res: Response, _next: NextFunction): void => {
   console.error('Error:', err)
 
   // JWT errors

@@ -13,8 +13,6 @@ interface GetMessagesQuery {
   status?: string
 }
 
-
-
 // Send SMS
 router.post(
   '/send',
@@ -49,7 +47,7 @@ router.post(
       console.error('Error sending SMS:', error)
       throw new AppError('Failed to send SMS', 500, 'SMS_SEND_FAILED')
     }
-  })
+  }),
 )
 
 // Get SMS history
@@ -85,7 +83,7 @@ router.get(
       console.error('Error fetching messages:', error)
       throw new AppError('Failed to fetch message history', 500, 'FETCH_MESSAGES_FAILED')
     }
-  })
+  }),
 )
 
 // Get specific SMS details
@@ -101,7 +99,7 @@ router.get(
       console.error('Error fetching message:', error)
       throw new AppError('Message not found', 404, 'MESSAGE_NOT_FOUND')
     }
-  })
+  }),
 )
 
 // Get conversation with a specific number
@@ -133,7 +131,7 @@ router.get(
       console.error('Error fetching conversation:', error)
       throw new AppError('Failed to fetch conversation', 500, 'FETCH_CONVERSATION_FAILED')
     }
-  })
+  }),
 )
 
 // Get list of conversations (unique phone numbers)
@@ -147,7 +145,7 @@ router.get(
       console.error('Error fetching conversations:', error)
       throw new AppError('Failed to fetch conversations', 500, 'FETCH_CONVERSATIONS_FAILED')
     }
-  })
+  }),
 )
 
 export default router

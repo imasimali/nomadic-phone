@@ -1,14 +1,6 @@
 import twilio, { Twilio } from 'twilio'
 import config from '../config.js'
-import {
-  Call,
-  CallsResponse,
-  Recording,
-  RecordingsResponse,
-  Message,
-  MessagesResponse,
-  SendSMSResponse,
-} from '../types/index.js'
+import { Call, CallsResponse, Recording, RecordingsResponse, Message, MessagesResponse, SendSMSResponse } from '../types/index.js'
 
 interface GetCallsOptions {
   limit?: number
@@ -199,7 +191,7 @@ class TwilioService {
               end_time: undefined,
             } as Recording
           }
-        })
+        }),
       )
 
       // Sort by creation date (newest first)

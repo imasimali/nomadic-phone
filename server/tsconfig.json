@@ -27,16 +27,8 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": [
-    "**/*.ts",
-    "**/*.js"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "tests/**/*.test.ts",
-    "tests/**/*.test.js"
-  ],
+  "include": ["**/*.ts", "**/*.js"],
+  "exclude": ["node_modules", "dist", "tests/**/*.test.ts", "tests/**/*.test.js"],
   "ts-node": {
     "esm": true,
     "experimentalSpecifierResolution": "node"

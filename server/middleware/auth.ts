@@ -9,11 +9,7 @@ interface TokenPayload extends JwtPayload {
   type?: string
 }
 
-const authenticateToken = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+const authenticateToken = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const authHeader = req.headers['authorization']
     const token = authHeader && authHeader.split(' ')[1] // Bearer TOKEN
@@ -93,7 +89,7 @@ const generateAccessToken = (): string => {
       expiresIn: '24h',
       issuer: 'nomadic-phone',
       audience: 'nomadic-phone-client',
-    }
+    },
   )
 }
 
@@ -112,7 +108,7 @@ const generateRefreshToken = (): string => {
       expiresIn: '7d',
       issuer: 'nomadic-phone',
       audience: 'nomadic-phone-client',
-    }
+    },
   )
 }
 

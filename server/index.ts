@@ -44,7 +44,7 @@ app.use(
         objectSrc: ["'none'"],
       },
     },
-  })
+  }),
 )
 
 // Simple rate limiting
@@ -60,7 +60,7 @@ app.use(
   cors({
     origin: config.NODE_ENV === 'production' ? config.APP_URL : ['http://localhost:3000', 'http://localhost:3001'],
     credentials: true,
-  })
+  }),
 )
 
 // Basic middleware

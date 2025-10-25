@@ -1,20 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  TextField,
-  Button,
-  Grid,
-  Alert,
-  Divider,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Chip,
-} from '@mui/material'
+import { Box, Card, CardContent, Typography, TextField, Button, Grid, Alert, Divider, List, ListItem, ListItemIcon, ListItemText, Chip } from '@mui/material'
 import { Save, Refresh, Phone, Info, CheckCircle, Warning } from '@mui/icons-material'
 import { voiceAPI, VoiceSettings } from '../../services/api'
 import LoadingScreen from '../Common/LoadingScreen'
@@ -91,8 +76,6 @@ const Settings: React.FC = () => {
     if (!originalSettings) return false
     return JSON.stringify(settings) !== JSON.stringify(originalSettings)
   }
-
-
 
   if (loading) {
     return <LoadingScreen />
@@ -201,20 +184,14 @@ const Settings: React.FC = () => {
                   <ListItemIcon>
                     <Phone color="primary" />
                   </ListItemIcon>
-                  <ListItemText
-                    primary="Default Behavior"
-                    secondary="Calls ring in browser, go to voicemail if unanswered"
-                  />
+                  <ListItemText primary="Default Behavior" secondary="Calls ring in browser, go to voicemail if unanswered" />
                 </ListItem>
 
                 <ListItem>
                   <ListItemIcon>
                     <Phone color="primary" />
                   </ListItemIcon>
-                  <ListItemText
-                    primary="Redirect (Optional)"
-                    secondary="Forward all calls to another number if configured"
-                  />
+                  <ListItemText primary="Redirect (Optional)" secondary="Forward all calls to another number if configured" />
                 </ListItem>
               </List>
 
@@ -256,23 +233,10 @@ const Settings: React.FC = () => {
 
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Account SID"
-                    placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                    disabled
-                    helperText="Your Twilio Account SID"
-                  />
+                  <TextField fullWidth label="Account SID" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" disabled helperText="Your Twilio Account SID" />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Auth Token"
-                    type="password"
-                    placeholder="••••••••••••••••••••••••••••••••"
-                    disabled
-                    helperText="Your Twilio Auth Token"
-                  />
+                  <TextField fullWidth label="Auth Token" type="password" placeholder="••••••••••••••••••••••••••••••••" disabled helperText="Your Twilio Auth Token" />
                 </Grid>
               </Grid>
             </CardContent>

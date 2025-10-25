@@ -53,7 +53,7 @@ router.post(
         refreshToken,
       },
     })
-  })
+  }),
 )
 
 // Refresh token
@@ -81,7 +81,7 @@ router.post(
     } catch (error) {
       throw new AppError('Invalid refresh token', 401, 'INVALID_REFRESH_TOKEN')
     }
-  })
+  }),
 )
 
 // Get current user profile
@@ -97,7 +97,7 @@ router.get(
         twilio_client_name: 'nomadic_client',
       },
     })
-  })
+  }),
 )
 
 // Logout (client-side token invalidation)
@@ -110,7 +110,7 @@ router.post(
     res.json({
       message: 'Logout successful',
     })
-  })
+  }),
 )
 
 export default router

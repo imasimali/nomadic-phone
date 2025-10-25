@@ -90,7 +90,7 @@ router.get(
       identity: req.user.twilio_client_name,
       applicationSid, // Include for debugging
     })
-  })
+  }),
 )
 
 // Configure TwiML Application
@@ -113,7 +113,7 @@ router.post(
       console.error('Error configuring TwiML Application:', error)
       throw new AppError('Failed to configure TwiML Application', 500, 'TWIML_CONFIG_FAILED')
     }
-  })
+  }),
 )
 
 // Get call history
@@ -149,7 +149,7 @@ router.get(
       console.error('Error fetching calls:', error)
       throw new AppError('Failed to fetch call history', 500, 'FETCH_CALLS_FAILED')
     }
-  })
+  }),
 )
 
 // Get recordings
@@ -166,7 +166,6 @@ router.get(
       return
     }
 
-
     const limit = req.query.limit || 20
 
     try {
@@ -179,7 +178,7 @@ router.get(
       console.error('Error fetching recordings:', error)
       throw new AppError('Failed to fetch recordings', 500, 'FETCH_RECORDINGS_FAILED')
     }
-  })
+  }),
 )
 
 // Get specific call details
@@ -195,7 +194,7 @@ router.get(
       console.error('Error fetching call:', error)
       throw new AppError('Call not found', 404, 'CALL_NOT_FOUND')
     }
-  })
+  }),
 )
 
 // Get user's voice settings
@@ -210,7 +209,7 @@ router.get(
     }
 
     res.json({ settings })
-  })
+  }),
 )
 
 // Update voice settings
@@ -250,7 +249,7 @@ router.put(
         push_notifications: !!(process.env.PUSHOVER_USER_KEY && process.env.PUSHOVER_API_TOKEN),
       },
     })
-  })
+  }),
 )
 
 // Proxy endpoint for recording downloads with authentication
@@ -295,7 +294,7 @@ router.get(
       }
       throw new AppError('Failed to fetch recording', 500, 'RECORDING_FETCH_FAILED')
     }
-  })
+  }),
 )
 
 export default router
