@@ -69,13 +69,11 @@ router.post(
       } else {
         // Forward to browser client with timeout handling
         console.log('Forwarding call to browser client')
-        const dial = twiml.dial({
-          callerId: To,
-          timeout: 30, // Ring for 30 seconds before going to voicemail
-          action: `${config.WEBHOOK_BASE_URL}/webhooks/voice/call-timeout`,
+
+        // Redirect to retry handler that will keep trying to connect
+        twiml.redirect({
           method: 'POST',
-        })
-        dial.client('nomadic_client')
+        }, `${config.WEBHOOK_BASE_URL}/webhooks/voice/dial-client?attempt=1`)
       }
     } else {
       // This is an OUTBOUND call from the Voice SDK
@@ -95,6 +93,86 @@ router.post(
   })
 )
 
+// Handle dialing the client with retry logic
+router.post(
+  '/voice/dial-client',
+  validateTwilioRequest,
+  asyncHandler(async (req: Request, res: Response) => {
+    const attempt = parseInt(req.query.attempt as string) || 1
+
+    console.log(`Attempting to dial client (attempt ${attempt})`)
+
+    const twiml = new twilio.twiml.VoiceResponse()
+
+    // Play ringback tone to give caller audio feedback while connecting
+    // Using a standard US ringback tone (2 seconds on, 4 seconds off pattern)
+    twiml.say({ voice: 'Polly.Joanna' }, 'Connecting your call, please wait.')
+    twiml.pause({ length: 2 })
+
+    // Try to dial the client
+    const dial = twiml.dial({
+      callerId: req.body.To,
+      timeout: 5, // Try for 5 seconds per attempt (if device is registered, it will ring)
+      action: `${config.WEBHOOK_BASE_URL}/webhooks/voice/dial-result?attempt=${attempt}`,
+      method: 'POST',
+      ringTone: 'us', // This plays when device is actually ringing
+    })
+    dial.client('nomadic_client')
+
+    res.type('text/xml').send(twiml.toString())
+  })
+)
+
+// Handle the result of a dial attempt
+router.post(
+  '/voice/dial-result',
+  validateTwilioRequest,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { DialCallStatus } = req.body
+    const attempt = parseInt(req.query.attempt as string) || 1
+    const maxAttempts = 10
+
+    console.log(`Dial attempt ${attempt} result: ${DialCallStatus}`)
+
+    const twiml = new twilio.twiml.VoiceResponse()
+
+    // If call was answered, we're done
+    if (DialCallStatus === 'completed') {
+      console.log('Call was answered successfully')
+      res.type('text/xml').send(twiml.toString())
+      return
+    }
+
+    // If call was explicitly rejected/canceled/busy, redirect to call-timeout handler
+    // Don't retry when user actively rejects the call
+    const rejectedStatuses = ['canceled', 'busy', 'failed']
+    if (rejectedStatuses.includes(DialCallStatus)) {
+      console.log(`Call was rejected/canceled (${DialCallStatus}), redirecting to call-timeout`)
+      twiml.redirect({
+        method: 'POST',
+      }, `${config.WEBHOOK_BASE_URL}/webhooks/voice/call-timeout`)
+      res.type('text/xml').send(twiml.toString())
+      return
+    }
+
+    // If we haven't reached max attempts, try again (only for no-answer)
+    if (attempt < maxAttempts) {
+      console.log(`Retrying... (attempt ${attempt + 1}/${maxAttempts})`)
+      twiml.redirect({
+        method: 'POST',
+      }, `${config.WEBHOOK_BASE_URL}/webhooks/voice/dial-client?attempt=${attempt + 1}`)
+    } else {
+      // Max attempts reached, redirect to call-timeout handler
+      console.log('Max attempts reached, redirecting to call-timeout')
+      twiml.redirect({
+        method: 'POST',
+      }, `${config.WEBHOOK_BASE_URL}/webhooks/voice/call-timeout`)
+    }
+
+    res.type('text/xml').send(twiml.toString())
+  })
+)
+
 // Handle call timeout - when client or redirect number doesn't answer
 router.post(
   '/voice/call-timeout',
@@ -107,9 +185,11 @@ router.post(
     const twiml = new twilio.twiml.VoiceResponse()
 
     // Check if call wasn't answered (timeout, busy, failed, canceled)
+    // If DialCallStatus is undefined, it means we were redirected here (e.g., max attempts reached)
+    // In that case, also go to voicemail
     const unansweredStatuses = ['no-answer', 'busy', 'failed', 'canceled']
-    if (unansweredStatuses.includes(DialCallStatus)) {
-      console.log(`Call not answered (${DialCallStatus}), redirecting to voicemail`)
+    if (!DialCallStatus || unansweredStatuses.includes(DialCallStatus)) {
+      console.log(`Call not answered (${DialCallStatus || 'redirected'}), redirecting to voicemail`)
 
       // Go to voicemail
       if (config.VOICE_MESSAGE) {
