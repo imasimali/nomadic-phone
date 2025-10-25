@@ -74,6 +74,9 @@ class TwiMLAppService {
       // Auto-update .env file with the Application SID
       await this.updateEnvFile(app.sid)
 
+      // Configure phone number webhooks
+      await this.configurePhoneNumber(app.sid)
+
       return {
         sid: app.sid,
         friendlyName: app.friendlyName,
@@ -84,6 +87,44 @@ class TwiMLAppService {
     } catch (error: any) {
       console.error('Error managing TwiML Application:', error)
       throw new Error(`Failed to manage TwiML Application: ${error.message}`)
+    }
+  }
+
+  private async configurePhoneNumber(appSid: string): Promise<void> {
+    if (!this.client || !config.TWILIO_PHONE_NUMBER) {
+      return
+    }
+
+    try {
+      // Find the phone number
+      const phoneNumbers = await this.client.incomingPhoneNumbers.list({
+        phoneNumber: config.TWILIO_PHONE_NUMBER,
+        limit: 1,
+      })
+
+      if (phoneNumbers.length === 0) {
+        console.warn(`Phone number ${config.TWILIO_PHONE_NUMBER} not found - skipping phone number configuration`)
+        return
+      }
+
+      const phoneNumber = phoneNumbers[0]
+      console.log(`📞 Configuring phone number: ${phoneNumber.phoneNumber}`)
+
+      // Update phone number configuration
+      // Voice: Use TwiML App
+      // SMS: Direct webhook (TwiML Apps don't handle phone number SMS automatically)
+      await this.client.incomingPhoneNumbers(phoneNumber.sid).update({
+        voiceApplicationSid: appSid,
+        smsUrl: `${config.WEBHOOK_BASE_URL}/webhooks/sms/incoming`,
+        smsMethod: 'POST',
+        statusCallback: `${config.WEBHOOK_BASE_URL}/webhooks/sms/status`,
+        statusCallbackMethod: 'POST',
+      })
+
+      console.log(`✅ Configured phone number webhooks (Voice: TwiML App, SMS: Direct webhook)`)
+    } catch (error: any) {
+      console.warn('Could not configure phone number:', error.message)
+      // Don't throw error - TwiML app is still configured
     }
   }
 
