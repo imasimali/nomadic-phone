@@ -107,15 +107,10 @@ router.post(
 
     const twiml = new twilio.twiml.VoiceResponse()
 
-    // Play ringback tone to give caller audio feedback while connecting
-    // Using a standard US ringback tone (2 seconds on, 4 seconds off pattern)
-    twiml.say({ voice: 'Polly.Joanna' }, 'Connecting your call, please wait.')
-    twiml.pause({ length: 2 })
-
     // Try to dial the client
     const dial = twiml.dial({
       callerId: req.body.To,
-      timeout: 5, // Try for 5 seconds per attempt (if device is registered, it will ring)
+      timeout: 20,
       action: `${config.WEBHOOK_BASE_URL}/webhooks/voice/dial-result?attempt=${attempt}`,
       method: 'POST',
       ringTone: 'us', // This plays when device is actually ringing
@@ -133,7 +128,7 @@ router.post(
   asyncHandler(async (req: Request, res: Response) => {
     const { DialCallStatus } = req.body
     const attempt = parseInt(req.query.attempt as string) || 1
-    const maxAttempts = 10
+    const maxAttempts = 6
 
     console.log(`Dial attempt ${attempt} result: ${DialCallStatus}`)
 
@@ -164,6 +159,9 @@ router.post(
     // If we haven't reached max attempts, try again (only for no-answer)
     if (attempt < maxAttempts) {
       console.log(`Retrying... (attempt ${attempt + 1}/${maxAttempts})`)
+      // Play custom ringback tone between attempts
+      // This plays while we wait to retry, giving user time to open app
+      twiml.play({ loop: 2 }, 'https://cdn.asim.id/calling-tone.mp3')
       twiml.redirect(
         {
           method: 'POST',
